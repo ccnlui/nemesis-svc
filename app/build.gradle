@@ -38,6 +38,7 @@ application {
         // Server hotspot vm
         // "-server",
         // GC logging
+        // "-Xlog:gc",
         // "-Xlog:gc*",
         // "-Xlog:gc*::time",
     ]
