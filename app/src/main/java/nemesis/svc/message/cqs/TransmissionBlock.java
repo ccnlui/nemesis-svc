@@ -3,11 +3,7 @@ package nemesis.svc.message.cqs;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 
-import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.wire.SelfDescribingMarshallable;
-import net.openhft.chronicle.wire.WireIn;
-import net.openhft.chronicle.wire.WireOut;
 
 // CQS_Pillar_Output_Specification 3.0
 // class Header {

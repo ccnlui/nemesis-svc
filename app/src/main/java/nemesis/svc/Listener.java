@@ -39,7 +39,7 @@ public class Listener implements Callable<Void> {
     // private final String addr = "224.0.90.0";
     // private final int port = 40000;
 
-    private final int MAX_DATAGRAM_SIZE = 65535;  // unused
+    // private final int MAX_DATAGRAM_SIZE = 65535;  // unused
     private final String NETWORK_IFACE = "en4";
 
     @Override
