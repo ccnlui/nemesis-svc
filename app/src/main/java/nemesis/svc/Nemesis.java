@@ -16,7 +16,7 @@ public class Nemesis {
         CommandLine cmd = new CommandLine(new Nemesis());
         cmd.addSubcommand("echoserver", EchoServer.class);
         cmd.addSubcommand("echoclient", EchoClient.class);
-        cmd.addSubcommand("subscribe", Subscribe.class);
+        cmd.addSubcommand("listener", Listener.class);
         System.exit(cmd.execute(args));
 
     }

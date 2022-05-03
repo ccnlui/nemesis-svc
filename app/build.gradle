@@ -23,6 +23,17 @@ dependencies {
     // This dependency is used by the application.
     implementation 'com.google.guava:guava:30.1.1-jre'
 
+    // Chronicle bom + third party bom
+    implementation(platform('net.openhft:third-party-bom:3.22.3'))
+    implementation(platform('net.openhft:chronicle-bom:2.23ea26'))
+    implementation 'net.openhft:chronicle-queue'
+    implementation 'net.openhft:chronicle-core'
+    implementation 'net.openhft:chronicle-wire'
+    implementation 'org.slf4j:slf4j-simple'
+    // Java Thread Affinity (version 5.5.0 in bom doesn't work)
+    implementation 'net.java.dev.jna:jna:5.11.0'
+    implementation 'net.java.dev.jna:jna-platform:5.11.0'
+
     // Picocli
     implementation 'info.picocli:picocli:4.6.3'
     annotationProcessor 'info.picocli:picocli-codegen:4.6.3'
@@ -38,13 +49,37 @@ application {
         // Server hotspot vm
         // "-server",
         // GC logging
-        // "-Xlog:gc",
+        "-Xlog:gc",
         // "-Xlog:gc*",
         // "-Xlog:gc*::time",
+
+        // JDK 17 Strongly Encapsulated JDK Internals
+        "--add-exports=java.base/jdk.internal.ref=ALL-UNNAMED",
+        "--add-exports=java.base/sun.nio.ch=ALL-UNNAMED",
+        "--add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
+        "--add-opens=jdk.compiler/com.sun.tools.javac=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+        "--add-opens=java.base/java.io=ALL-UNNAMED",
+        "--add-opens=java.base/java.util=ALL-UNNAMED",
     ]
 }
 
 tasks.named('test') {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
+
+    // JDK 17 Strongly Encapsulated JDK Internals
+    jvmArgs = [
+        "--add-exports=java.base/jdk.internal.ref=ALL-UNNAMED",
+        "--add-exports=java.base/sun.nio.ch=ALL-UNNAMED",
+        "--add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
+        "--add-opens=jdk.compiler/com.sun.tools.javac=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+        "--add-opens=java.base/java.io=ALL-UNNAMED",
+        "--add-opens=java.base/java.util=ALL-UNNAMED",
+    ]
 }
