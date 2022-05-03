@@ -15,6 +15,7 @@ public class Nemesis {
 
         CommandLine cmd = new CommandLine(new Nemesis());
         cmd.addSubcommand("listener", Listener.class);
+        cmd.addSubcommand("reader", Reader.class);
         System.exit(cmd.execute(args));
 
     }

@@ -3,6 +3,12 @@ package nemesis.svc.message.cqs;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 
+import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.core.io.IORuntimeException;
+import net.openhft.chronicle.wire.SelfDescribingMarshallable;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
+
 // CQS_Pillar_Output_Specification 3.0
 // class Header {
 //     byte  version;                 // 1 byte  (offset 0)
@@ -14,12 +20,12 @@ import java.time.Instant;
 //     long  sipBlockTimestamp;       // 8 bytes (offset 10)
 //     short blockCheckSum;           // 2 bytes (offset 18)
 // }                                  // total = 20 bytes
-public class TransmissionBlock {
+public class TransmissionBlock extends SelfDescribingMarshallable {
 
     public static int MAX_SIZE = 1024;
     ByteBuffer buf;
 
-    public void fromBytes(ByteBuffer buf) {
+    public void fromByteBuffer(ByteBuffer buf) {
         this.buf = buf;
     }
 
@@ -55,5 +61,4 @@ public class TransmissionBlock {
             .toString()
         );
     }
-
 }

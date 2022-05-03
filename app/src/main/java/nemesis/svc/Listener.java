@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.concurrent.Callable;
 
 import nemesis.svc.message.cqs.TransmissionBlock;
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.queue.ExcerptAppender;
 import net.openhft.chronicle.queue.impl.single.SingleChronicleQueue;
 import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
@@ -46,7 +47,7 @@ public class Listener implements Callable<Void> {
 
         final HashMap<DatagramChannel, String> subscribedGroups = new HashMap<>();
 
-        final ByteBuffer        buf           = ByteBuffer.allocateDirect(TransmissionBlock.MAX_SIZE);
+        final Bytes<ByteBuffer> bbb           = Bytes.elasticByteBuffer(TransmissionBlock.MAX_SIZE, TransmissionBlock.MAX_SIZE);
         final TransmissionBlock block         = new TransmissionBlock();
         final String            queuePathIce  = Config.queueBasePath + "/ice";
 
@@ -66,25 +67,25 @@ public class Listener implements Callable<Void> {
             while (true) {
                 sel.selectNow(key -> {
                     try {
+                        // get underlying ByteBuffer to work with nio
+                        ByteBuffer buf = bbb.underlyingObject();
                         buf.clear();
                         DatagramChannel ch = (DatagramChannel) key.channel();
                         ch.receive(buf);
+                        buf.flip();  // flip buffer for reading
+                        bbb.readLimit(buf.remaining()); // update wrapper read cursor
         
                         // process message
-                        buf.flip();
-                        block.fromBytes(buf);
+                        block.fromByteBuffer(buf);
                         block.parseHeader();
 
-                        appender.writeDocument(wire -> wire.write("CQS").marshallable(
-                            m -> m.write("data").bytesMarshallable(b -> b.writeSome(buf))
-                        ));
+                        // write raw bytes only
+                        // appender.writeDocument(wire -> wire.writeBytes(b -> b.writeSome(buf)));
+
+                        // write event and bytes
+                        appender.writeDocument(wire -> wire.write("CQS").bytes(bbb));
 
                         // System.out.printf("%s: ", subscribedGroups.get(ch));
-                        // while (buf.hasRemaining()) {
-                        //     buf.get();
-                        //     System.out.print((char) buf.get());
-                        // }
-                        // System.out.println();
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
