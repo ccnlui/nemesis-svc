@@ -77,7 +77,7 @@ public class Listener implements Callable<Void> {
         
                         // process message
                         block.fromByteBuffer(buf);
-                        block.parseHeader();
+                        // block.parseHeader();
 
                         // write raw bytes only
                         // appender.writeDocument(wire -> wire.writeBytes(b -> b.writeSome(buf)));

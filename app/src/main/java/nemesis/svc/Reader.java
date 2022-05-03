@@ -1,7 +1,10 @@
 package nemesis.svc;
 
 import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.util.concurrent.Callable;
+
+import org.HdrHistogram.Histogram;
 
 import nemesis.svc.message.cqs.TransmissionBlock;
 import net.openhft.chronicle.bytes.Bytes;
@@ -21,10 +24,20 @@ public class Reader implements Callable<Void> {
     @Option(names = {"-h", "--help"}, usageHelp = true, description = "help message")
     boolean help;
 
+    @Option(names = {"-b", "--bench"}, description = "measure inbound delay for 20 sec")
+    boolean bench;
+
+    // Constants.
+    final long WARMUP_TIME_MSEC = 5_000;
+    final long RUN_TIME_MSEC    = 20_000;
+
     @Override
     public Void call() throws Exception {
 
         final String queuePathIce = Config.queueBasePath + "/ice";
+
+        long      startTime  = System.currentTimeMillis();
+        Histogram iceInDelay = new Histogram(60_000_000_000L, 3);;
 
         try (
             SingleChronicleQueue inQueueIce = SingleChronicleQueueBuilder
@@ -35,12 +48,12 @@ public class Reader implements Callable<Void> {
             final ExcerptTailer     tailer = inQueueIce.createTailer();
             final StringBuilder     sb     = new StringBuilder(32);
             final Bytes<ByteBuffer> bbb    = Bytes.elasticByteBuffer(TransmissionBlock.MAX_SIZE, TransmissionBlock.MAX_SIZE);
+            final TransmissionBlock block  = new TransmissionBlock();
 
             System.out.println("Starting reader...");
 
             // Busy wait loop.
             while (true) {
-                
                 // read raw bytes into ByteBuffer
                 // buf.clear();
                 // tailer.readDocument(wire -> wire.readBytes(b -> b.read(buf)));
@@ -49,9 +62,28 @@ public class Reader implements Callable<Void> {
                 tailer.readDocument(wire -> {
                     sb.setLength(0);
                     wire.readEventName(sb).bytes(bbb, true);
+
+                    // process block.
+                    block.fromByteBuffer(bbb.underlyingObject());
+                    // block.parseHeader();
+                    if (bench && (System.currentTimeMillis() - startTime > WARMUP_TIME_MSEC)) {
+                        iceInDelay.recordValue(nowNano() - block.sipBlockTimestamp());
+                    }
                 });
+
+                if (bench && System.currentTimeMillis() - startTime > WARMUP_TIME_MSEC + RUN_TIME_MSEC) {
+                    System.out.println("---------- iceInDelay (us) ----------");
+                    iceInDelay.outputPercentileDistribution(System.out, 1000.0);  // output in us
+                    break;
+                }
             }
+            return null;
         }
+    }
+
+    private long nowNano() {
+        Instant now = Instant.now();
+        return now.getEpochSecond() * 1_000_000_000L + now.getNano();
     }
 
     void printDebugString(Bytes<ByteBuffer> bbb) {

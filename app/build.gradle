@@ -37,6 +37,9 @@ dependencies {
     // Picocli
     implementation 'info.picocli:picocli:4.6.3'
     annotationProcessor 'info.picocli:picocli-codegen:4.6.3'
+
+    // HdrHistogram
+    implementation 'org.hdrhistogram:HdrHistogram:2.1.12'
 }
 
 application {
