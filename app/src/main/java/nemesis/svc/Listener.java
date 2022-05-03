@@ -31,6 +31,13 @@ public class Listener implements Callable<Void> {
     @Option(names = {"-h", "--help"}, usageHelp = true, description = "help message")
     boolean help;
 
+    @Option(
+        names = {"-i", "--interface"},
+        defaultValue = "${NEMESIS_NETWORK_INTERFACE:-eth0}",
+        description = "network interface"
+    )
+    String networkInterface;
+
     // subscribe options
     // private final String msgType = "quote";
     // private final char tape = 'A';
@@ -40,7 +47,6 @@ public class Listener implements Callable<Void> {
     // private final int port = 40000;
 
     // private final int MAX_DATAGRAM_SIZE = 65535;  // unused
-    private final String NETWORK_IFACE = "en4";
 
     @Override
     public Void call() throws Exception {
@@ -52,6 +58,7 @@ public class Listener implements Callable<Void> {
         final String            queuePathIce  = Config.queueBasePath + "/ice";
 
         Selector sel = Selector.open();
+        System.out.println("Subscribing to: 224.0.90.0:40000 on " + networkInterface);
         subscribe("224.0.90.0", 40000, sel, subscribedGroups);
         // subscribe("224.0.89.0", 40000, sel, subscribedGroups);
 
@@ -105,7 +112,7 @@ public class Listener implements Callable<Void> {
                                     .setOption(StandardSocketOptions.SO_REUSEADDR, true)
                                     .bind(new InetSocketAddress(port)); // bind to wildcard address
         ch.configureBlocking(false);
-        NetworkInterface iface = NetworkInterface.getByName(NETWORK_IFACE);
+        NetworkInterface iface = NetworkInterface.getByName(networkInterface);
         InetAddress group = InetAddress.getByName(addr);
         
         // join and register with selector
