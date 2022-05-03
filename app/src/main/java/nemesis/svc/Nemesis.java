@@ -14,8 +14,6 @@ public class Nemesis {
     public static void main( String[] args ) {
 
         CommandLine cmd = new CommandLine(new Nemesis());
-        cmd.addSubcommand("echoserver", EchoServer.class);
-        cmd.addSubcommand("echoclient", EchoClient.class);
         cmd.addSubcommand("listener", Listener.class);
         System.exit(cmd.execute(args));
 
