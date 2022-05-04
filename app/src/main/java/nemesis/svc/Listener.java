@@ -83,43 +83,63 @@ public class Listener implements Callable<Void> {
         ) {
             final ExcerptAppender appender = outQueueIce.acquireAppender();
 
+            DatagramChannel ch = subscribedGroups.keySet().iterator().next();
+            ByteBuffer buf = bbb.underlyingObject();
+
             // busy wait
             while (true) {
-                sel.selectNow(key -> {
-                    try {
-                        long now = nowNano();
+                // sel.selectNow(key -> {
+                //     try {
+                //         long now = nowNano();
 
-                        // get underlying ByteBuffer to work with nio
-                        ByteBuffer buf = bbb.underlyingObject();
-                        buf.clear();
-                        DatagramChannel ch = (DatagramChannel) key.channel();
-                        ch.receive(buf);
-                        buf.flip();  // flip buffer for reading
-                        bbb.readLimit(buf.remaining()); // update wrapper read cursor
+                //         // get underlying ByteBuffer to work with nio
+                //         ByteBuffer buf = bbb.underlyingObject();
+                //         buf.clear();
+                //         DatagramChannel ch = (DatagramChannel) key.channel();
+                //         ch.receive(buf);
+                //         buf.flip();  // flip buffer for reading
+                //         bbb.readLimit(buf.remaining()); // update wrapper read cursor
         
-                        // process message
-                        block.fromByteBuffer(buf);
-                        // block.parseHeader();
-                        if (bench && (System.currentTimeMillis() - startTime > WARMUP_TIME_MSEC)) {
-                            lsnInDelay.recordValue(now - block.sipBlockTimestamp());
+                //         // process message
+                //         block.fromByteBuffer(buf);
+                //         if (bench && (System.currentTimeMillis() - startTime > WARMUP_TIME_MSEC)) {
+                //             lsnInDelay.recordValue(now - block.sipBlockTimestamp());
+                //         }
+
+                //         appender.writeDocument(wire -> {
+                //             wire.write("CQS").marshallable(m -> {
+                //                 m.write("data").bytes(bbb);
+                //                 m.write("rcvAt").int64(now);
+                //             });
+                //         });
+                //     } catch (Exception e) {
+                //         throw new RuntimeException(e);
+                //     }
+                // });
+                if (ch.receive(buf) != null) {
+                    long now = nowNano();
+                    buf.flip();  // flip buffer for reading
+                    bbb.readLimit(buf.remaining()); // update wrapper read cursor
+    
+                    // process message
+                    block.fromByteBuffer(buf);
+                    if (bench && (System.currentTimeMillis() - startTime > WARMUP_TIME_MSEC)) {
+                        long d = now - block.sipBlockTimestamp();
+                        if (d < 0) {
+                            d = 42;
                         }
-
-                        // write raw bytes only
-                        // appender.writeDocument(wire -> wire.writeBytes(b -> b.writeSome(buf)));
-
-                        // write event and bytes
-                        appender.writeDocument(wire -> {
-                            wire.write("CQS").marshallable(m -> {
-                                m.write("data").bytes(bbb);
-                                m.write("rcvAt").int64(now);
-                            });
-                        });
-
-                        // System.out.printf("%s: ", subscribedGroups.get(ch));
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
+                        lsnInDelay.recordValue(d);
                     }
-                });
+
+                    appender.writeDocument(wire -> {
+                        wire.write("CQS").marshallable(m -> {
+                            m.write("data").bytes(bbb);
+                            m.write("rcvAt").int64(now);
+                        });
+                    });
+
+                    buf.clear();
+                }
 
                 if (bench && System.currentTimeMillis() - startTime > WARMUP_TIME_MSEC + RUN_TIME_MSEC) {
                     System.out.println("---------- lsnInDelay (us) ----------");

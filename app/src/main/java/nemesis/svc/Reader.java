@@ -63,12 +63,7 @@ public class Reader implements Callable<Void> {
             System.out.println("Starting reader...");
 
             // Busy wait loop.
-            while (true) {
-                // read raw bytes into ByteBuffer
-                // buf.clear();
-                // tailer.readDocument(wire -> wire.readBytes(b -> b.read(buf)));
-                
-                // read event and bytes
+            while (true) {                
                 tailer.readDocument(wire -> {
                     long now = nowNano();
 
@@ -79,8 +74,6 @@ public class Reader implements Callable<Void> {
 
                         // process block.
                         block.fromByteBuffer(bbb.underlyingObject());
-                        // block.parseHeader();
-
                         if (bench && (System.currentTimeMillis() - startTime > WARMUP_TIME_MSEC)) {
                             if (benchTimestamp == "sip")
                                 rdrInDelay.recordValue(now - block.sipBlockTimestamp());
