@@ -13,6 +13,9 @@ import net.openhft.chronicle.queue.impl.single.SingleChronicleQueue;
 import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.ParameterException;
+import picocli.CommandLine.Spec;
+import picocli.CommandLine.Model.CommandSpec;
 
 @Command(
     name = "reader",
@@ -21,11 +24,16 @@ import picocli.CommandLine.Option;
 )
 public class Reader implements Callable<Void> {
 
+    @Spec CommandSpec spec;
+
     @Option(names = {"-h", "--help"}, usageHelp = true, description = "help message")
     boolean help;
 
     @Option(names = {"-b", "--bench"}, description = "measure inbound delay for 20 sec")
     boolean bench;
+
+    @Option(names = "--timestamp", defaultValue = "${BENCH_TIMESTAMP:-sip}", description = "timestamp used for measurement (sip, rcvAt)")
+    String benchTimestamp;
 
     // Constants.
     final long WARMUP_TIME_MSEC = 10_000;
@@ -33,6 +41,8 @@ public class Reader implements Callable<Void> {
 
     @Override
     public Void call() throws Exception {
+
+        validate();
 
         final String queuePathIce = Config.queueBasePath + "/ice";
 
@@ -61,14 +71,21 @@ public class Reader implements Callable<Void> {
                 // read event and bytes
                 tailer.readDocument(wire -> {
                     sb.setLength(0);
-                    wire.readEventName(sb).bytes(bbb, true);
+                    wire.readEventName(sb).marshallable(m -> {
+                        m.read("data").bytes(bbb, true);
+                        long rcvAt = m.read("rcvAt").int64();
 
-                    // process block.
-                    block.fromByteBuffer(bbb.underlyingObject());
-                    // block.parseHeader();
-                    if (bench && (System.currentTimeMillis() - startTime > WARMUP_TIME_MSEC)) {
-                        rdrInDelay.recordValue(nowNano() - block.sipBlockTimestamp());
-                    }
+                        // process block.
+                        block.fromByteBuffer(bbb.underlyingObject());
+                        // block.parseHeader();
+
+                        if (bench && (System.currentTimeMillis() - startTime > WARMUP_TIME_MSEC)) {
+                            if (benchTimestamp == "sip")
+                                rdrInDelay.recordValue(nowNano() - block.sipBlockTimestamp());
+                            else
+                                rdrInDelay.recordValue(nowNano() - rcvAt);
+                        }
+                    });
                 });
 
                 if (bench && System.currentTimeMillis() - startTime > WARMUP_TIME_MSEC + RUN_TIME_MSEC) {
@@ -78,6 +95,12 @@ public class Reader implements Callable<Void> {
                 }
             }
             return null;
+        }
+    }
+
+    private void validate() throws Exception {
+        if (!benchTimestamp.contentEquals("sip") && !benchTimestamp.contentEquals("rcvAt")) {
+            throw new ParameterException(spec.commandLine(), "invalid value " + benchTimestamp + " for --timestamp: 'sip' or 'rcvAt'");
         }
     }
 
