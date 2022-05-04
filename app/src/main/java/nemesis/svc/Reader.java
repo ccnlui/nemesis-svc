@@ -70,6 +70,8 @@ public class Reader implements Callable<Void> {
                 
                 // read event and bytes
                 tailer.readDocument(wire -> {
+                    long now = nowNano();
+
                     sb.setLength(0);
                     wire.readEventName(sb).marshallable(m -> {
                         m.read("data").bytes(bbb, true);
@@ -81,9 +83,9 @@ public class Reader implements Callable<Void> {
 
                         if (bench && (System.currentTimeMillis() - startTime > WARMUP_TIME_MSEC)) {
                             if (benchTimestamp == "sip")
-                                rdrInDelay.recordValue(nowNano() - block.sipBlockTimestamp());
+                                rdrInDelay.recordValue(now - block.sipBlockTimestamp());
                             else
-                                rdrInDelay.recordValue(nowNano() - rcvAt);
+                                rdrInDelay.recordValue(now - rcvAt);
                         }
                     });
                 });

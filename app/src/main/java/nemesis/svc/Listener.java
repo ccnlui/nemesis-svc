@@ -87,7 +87,7 @@ public class Listener implements Callable<Void> {
             while (true) {
                 sel.selectNow(key -> {
                     try {
-                        long rcvAt = nowNano();
+                        long now = nowNano();
 
                         // get underlying ByteBuffer to work with nio
                         ByteBuffer buf = bbb.underlyingObject();
@@ -101,7 +101,7 @@ public class Listener implements Callable<Void> {
                         block.fromByteBuffer(buf);
                         // block.parseHeader();
                         if (bench && (System.currentTimeMillis() - startTime > WARMUP_TIME_MSEC)) {
-                            lsnInDelay.recordValue(rcvAt - block.sipBlockTimestamp());
+                            lsnInDelay.recordValue(now - block.sipBlockTimestamp());
                         }
 
                         // write raw bytes only
@@ -111,7 +111,7 @@ public class Listener implements Callable<Void> {
                         appender.writeDocument(wire -> {
                             wire.write("CQS").marshallable(m -> {
                                 m.write("data").bytes(bbb);
-                                m.write("rcvAt").int64(rcvAt);
+                                m.write("rcvAt").int64(now);
                             });
                         });
 
