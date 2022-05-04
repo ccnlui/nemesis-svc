@@ -28,7 +28,7 @@ public class Reader implements Callable<Void> {
     boolean bench;
 
     // Constants.
-    final long WARMUP_TIME_MSEC = 5_000;
+    final long WARMUP_TIME_MSEC = 10_000;
     final long RUN_TIME_MSEC    = 20_000;
 
     @Override
@@ -37,7 +37,7 @@ public class Reader implements Callable<Void> {
         final String queuePathIce = Config.queueBasePath + "/ice";
 
         long      startTime  = System.currentTimeMillis();
-        Histogram iceInDelay = new Histogram(60_000_000_000L, 3);;
+        Histogram rdrInDelay = new Histogram(60_000_000_000L, 3);;
 
         try (
             SingleChronicleQueue inQueueIce = SingleChronicleQueueBuilder
@@ -67,13 +67,13 @@ public class Reader implements Callable<Void> {
                     block.fromByteBuffer(bbb.underlyingObject());
                     // block.parseHeader();
                     if (bench && (System.currentTimeMillis() - startTime > WARMUP_TIME_MSEC)) {
-                        iceInDelay.recordValue(nowNano() - block.sipBlockTimestamp());
+                        rdrInDelay.recordValue(nowNano() - block.sipBlockTimestamp());
                     }
                 });
 
                 if (bench && System.currentTimeMillis() - startTime > WARMUP_TIME_MSEC + RUN_TIME_MSEC) {
-                    System.out.println("---------- iceInDelay (us) ----------");
-                    iceInDelay.outputPercentileDistribution(System.out, 1000.0);  // output in us
+                    System.out.println("---------- rdrInDelay (us) ----------");
+                    rdrInDelay.outputPercentileDistribution(System.out, 1000.0);  // output in us
                     break;
                 }
             }

@@ -10,8 +10,11 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.concurrent.Callable;
+
+import org.HdrHistogram.Histogram;
 
 import nemesis.svc.message.cqs.TransmissionBlock;
 import net.openhft.chronicle.bytes.Bytes;
@@ -38,6 +41,13 @@ public class Listener implements Callable<Void> {
     )
     String networkInterface;
 
+    @Option(names = {"-b", "--bench"}, description = "measure inbound delay for 20 sec")
+    boolean bench;
+
+    // Constants.
+    final long WARMUP_TIME_MSEC = 10_000;
+    final long RUN_TIME_MSEC    = 20_000;
+
     // subscribe options
     // private final String msgType = "quote";
     // private final char tape = 'A';
@@ -56,6 +66,9 @@ public class Listener implements Callable<Void> {
         final Bytes<ByteBuffer> bbb           = Bytes.elasticByteBuffer(TransmissionBlock.MAX_SIZE, TransmissionBlock.MAX_SIZE);
         final TransmissionBlock block         = new TransmissionBlock();
         final String            queuePathIce  = Config.queueBasePath + "/ice";
+
+        long      startTime  = System.currentTimeMillis();
+        Histogram lsnInDelay = new Histogram(60_000_000_000L, 3);;
 
         Selector sel = Selector.open();
         System.out.println("Subscribing to: 224.0.90.0:40000 on " + networkInterface);
@@ -85,6 +98,9 @@ public class Listener implements Callable<Void> {
                         // process message
                         block.fromByteBuffer(buf);
                         // block.parseHeader();
+                        if (bench && (System.currentTimeMillis() - startTime > WARMUP_TIME_MSEC)) {
+                            lsnInDelay.recordValue(nowNano() - block.sipBlockTimestamp());
+                        }
 
                         // write raw bytes only
                         // appender.writeDocument(wire -> wire.writeBytes(b -> b.writeSome(buf)));
@@ -97,9 +113,15 @@ public class Listener implements Callable<Void> {
                         throw new RuntimeException(e);
                     }
                 });
+
+                if (bench && System.currentTimeMillis() - startTime > WARMUP_TIME_MSEC + RUN_TIME_MSEC) {
+                    System.out.println("---------- lsnInDelay (us) ----------");
+                    lsnInDelay.outputPercentileDistribution(System.out, 1000.0);  // output in us
+                    break;
+                }
             }
         }
-    
+        return null;
     }
 
     void subscribe(
@@ -119,5 +141,10 @@ public class Listener implements Callable<Void> {
         ch.join(group, iface);
         ch.register(sel, SelectionKey.OP_READ);
         subscribedGroups.put(ch, addr + ":" + port);
+    }
+
+    private long nowNano() {
+        Instant now = Instant.now();
+        return now.getEpochSecond() * 1_000_000_000L + now.getNano();
     }
 }
