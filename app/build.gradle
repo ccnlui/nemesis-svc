@@ -50,9 +50,10 @@ application {
 
     applicationDefaultJvmArgs = [
         // Server hotspot vm
-        // "-server",
+        "-server",
         // GC logging
-        "-Xlog:gc",
+        // "-Xlog:gc",
+        "-Xlog:gc,gc+init",
         // "-Xlog:gc*",
         // "-Xlog:gc*::time",
 
