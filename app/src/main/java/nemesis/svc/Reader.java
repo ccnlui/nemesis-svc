@@ -63,7 +63,7 @@ public class Reader implements Callable<Void> {
             System.out.println("Starting reader...");
 
             // Busy wait loop.
-            while (true) {                
+            while (true) {
                 tailer.readDocument(wire -> {
                     long now = nowNano();
 

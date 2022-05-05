@@ -51,11 +51,16 @@ application {
     applicationDefaultJvmArgs = [
         // Server hotspot vm
         "-server",
+
         // GC logging
         // "-Xlog:gc",
         "-Xlog:gc,gc+init",
         // "-Xlog:gc*",
         // "-Xlog:gc*::time",
+
+        // Heap size.
+        "-XX:InitialHeapSize=64m",
+        "-XX:MaxHeapSize=64m",
 
         // JDK 17 Strongly Encapsulated JDK Internals
         "--add-exports=java.base/jdk.internal.ref=ALL-UNNAMED",
