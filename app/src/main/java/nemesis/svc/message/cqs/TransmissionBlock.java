@@ -44,6 +44,12 @@ public class TransmissionBlock extends SelfDescribingMarshallable {
         return sec * 1_000_000_000L + nsec;
     }
 
+    public void setSipBlockTimestamp() throws Exception {
+        Instant now = Instant.now();
+        buf.putInt(10, (int) now.getEpochSecond());
+        buf.putInt(14, now.getNano());
+    }
+
     public void parseHeader() {
         System.out.printf("(%s) size: %d seq num: %d msgInBlk: %d timestamp: %d time: %s\n",
             buf.order().toString(),

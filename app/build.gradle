@@ -40,6 +40,11 @@ dependencies {
 
     // HdrHistogram
     implementation 'org.hdrhistogram:HdrHistogram:2.1.12'
+
+    // Aeron
+    implementation 'io.aeron:aeron-client:1.38.1'
+    implementation 'io.aeron:aeron-driver:1.38.1'
+    implementation 'io.aeron:aeron-agent:1.38.1'
 }
 
 application {
@@ -63,6 +68,7 @@ application {
         "-XX:MaxHeapSize=64m",
 
         // JDK 17 Strongly Encapsulated JDK Internals
+        // chronicle
         "--add-exports=java.base/jdk.internal.ref=ALL-UNNAMED",
         "--add-exports=java.base/sun.nio.ch=ALL-UNNAMED",
         "--add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED",
@@ -72,6 +78,10 @@ application {
         "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
         "--add-opens=java.base/java.io=ALL-UNNAMED",
         "--add-opens=java.base/java.util=ALL-UNNAMED",
+
+        // JDK 17 Strongly Encapsulated JDK Internals
+        // aeron
+        "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
     ]
 }
 
