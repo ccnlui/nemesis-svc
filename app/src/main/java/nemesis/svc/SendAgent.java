@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.aeron.Publication;
+import io.aeron.exceptions.AeronException;
 import nemesis.svc.message.Message;
 
 public class SendAgent implements Agent
@@ -48,10 +49,11 @@ public class SendAgent implements Agent
             msg.setTimestamp(epochNs - 1_000_000L);
             msg.setReceivedAt(epochNs);
 
-            long pos = pub.offer(unsafeBuffer);
-            if (pos < 0)
+            long pos;
+            while ((pos = pub.offer(unsafeBuffer)) <= 0)
             {
-                LOG.error("failed to send message: {}", Publication.errorString(pos));
+                if (!retryPublicationResult(pos))
+                    break;
             }
             sentMsg += 1;
         }
@@ -61,6 +63,30 @@ public class SendAgent implements Agent
             sentMsg = 0;
         }
         return 0;
+    }
+
+    private boolean retryPublicationResult(final long result)
+    {
+        if (result == Publication.ADMIN_ACTION)
+        {
+            return true;
+        }
+        else if (result == Publication.BACK_PRESSURED)
+        {
+            return false;
+        }
+        else if (result == Publication.CLOSED || 
+            result == Publication.MAX_POSITION_EXCEEDED ||
+            result == Publication.NOT_CONNECTED)
+        {
+            LOG.error("failed to send message: {}", Publication.errorString(result));
+            throw new AeronException("Publication error: " + Publication.errorString(result));
+        }
+        else
+        {
+            LOG.error("unknown publication result: {}", result);
+        }
+        return false;
     }
 
     @Override
