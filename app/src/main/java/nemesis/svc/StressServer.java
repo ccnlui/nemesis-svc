@@ -39,6 +39,10 @@ public class StressServer implements Callable<Void>
         description = "set the interval for producing trades (default ${DEFAULT-VALUE}us)")
     long tradeIntervalUs;
 
+    @Option(names = "--embedded-media-driver", defaultValue = "false",
+        description = "launch with embedded media driver (default ${DEFAULT-VALUE})")
+    boolean embeddedMediaDriver;
+
     private static final Logger LOG = LoggerFactory.getLogger(StressServer.class);
 
     @Override
@@ -49,20 +53,9 @@ public class StressServer implements Callable<Void>
         final IdleStrategy idleStrategySend = new BusySpinIdleStrategy();
         final ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
 
-        // construct media driver, clean up media driver folder on start/stop
-        final MediaDriver.Context mediaDriverCtx = new MediaDriver.Context()
-            .dirDeleteOnStart(true)
-            .threadingMode(ThreadingMode.SHARED)
-            .sharedIdleStrategy(new BusySpinIdleStrategy())
-            .dirDeleteOnShutdown(true);
-        final MediaDriver mediaDriver = MediaDriver.launchEmbedded(mediaDriverCtx);
-
-        // construct aeron, point at the media driver's folder
-        final Aeron.Context aeronCtx = new Aeron.Context()
-            .aeronDirectoryName(mediaDriver.aeronDirectoryName());
-        final Aeron aeron = Aeron.connect(aeronCtx);
-
-        LOG.info("Dir: {}", mediaDriver.aeronDirectoryName());
+        final MediaDriver mediaDriver = launchEmbeddedMediaDriverIfConfigured();
+        String aeronDirName = mediaDriver == null ? null : mediaDriver.aeronDirectoryName();
+        final Aeron aeron = connectAeron(aeronDirName);
 
         // construct the publication
         final Publication pub = aeron.addPublication(channel, stream);
@@ -87,10 +80,46 @@ public class StressServer implements Callable<Void>
         barrier.await();
 
         // close the resources
-        agentRunner.close();
-        aeron.close();
-        mediaDriver.close();
+        closeIfNotNull(agentRunner);
+        closeIfNotNull(aeron);
+        closeIfNotNull(mediaDriver);
 
         return null;
+    }
+
+    private MediaDriver launchEmbeddedMediaDriverIfConfigured()
+    {
+        if (embeddedMediaDriver)
+        {
+            final MediaDriver.Context mediaDriverCtx = new MediaDriver.Context()
+                .dirDeleteOnStart(true)
+                .threadingMode(ThreadingMode.SHARED)
+                .sharedIdleStrategy(new BusySpinIdleStrategy())
+                .dirDeleteOnShutdown(true);
+            MediaDriver md = MediaDriver.launchEmbedded(mediaDriverCtx);
+
+            LOG.info(mediaDriverCtx.toString());
+            return md;
+        }
+        return null;
+    }
+
+    private Aeron connectAeron(String aeronDirName)
+    {
+        Aeron.Context aeronCtx;
+        if (aeronDirName == null)
+            aeronCtx = new Aeron.Context();
+        else
+            aeronCtx = new Aeron.Context().aeronDirectoryName(aeronDirName);
+        LOG.info(aeronCtx.toString());
+
+        final Aeron aeron = Aeron.connect(aeronCtx);
+        return aeron;
+    }
+
+    private void closeIfNotNull(final AutoCloseable closeable) throws Exception
+    {
+        if (closeable != null)
+            closeable.close();
     }
 }
