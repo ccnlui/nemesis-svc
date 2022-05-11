@@ -31,6 +31,14 @@ public class StressServer implements Callable<Void>
     @Option(names = {"-h", "--help"}, usageHelp = true, description = "help message")
     boolean help;
 
+    @Option(names = "--quote-interval", defaultValue = "100",
+        description = "set the interval for producing quotes (default ${DEFAULT-VALUE}us)")
+    long quoteIntervalUs;
+
+    @Option(names = "--trade-interval", defaultValue = "200",
+        description = "set the interval for producing trades (default ${DEFAULT-VALUE}us)")
+    long tradeIntervalUs;
+
     private static final Logger LOG = LoggerFactory.getLogger(StressServer.class);
 
     @Override
@@ -63,8 +71,8 @@ public class StressServer implements Callable<Void>
         Quote quote = new Quote(ByteBuffer.allocateDirect(Quote.MAX_SIZE));
         Trade trade = new Trade(ByteBuffer.allocateDirect(Trade.MAX_SIZE));
 
-        final SendAgent sendQuotes = new SendAgent(pub, quote, 100_000L);
-        final SendAgent sendTrades = new SendAgent(pub, trade, 200_000L);
+        final SendAgent sendQuotes = new SendAgent(pub, quote, quoteIntervalUs * 1000L);
+        final SendAgent sendTrades = new SendAgent(pub, trade, tradeIntervalUs * 1000L);
         final AgentRunner agentRunner = new AgentRunner(
             idleStrategySend,
             Throwable::printStackTrace,
