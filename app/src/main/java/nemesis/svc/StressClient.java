@@ -33,12 +33,17 @@ public class StressClient implements Callable<Void>
         description = "launch with embedded media driver (default ${DEFAULT-VALUE})")
     boolean embeddedMediaDriver;
 
+    @Option(names = "--sub-endpoint",
+        defaultValue = "${SUB_ENDPOINT:-127.0.0.1:2000}",
+        description = "endpoint from which messages are subscribed in address:port format (default: \"${DEFAULT-VALUE}\")")
+    String subEndpoint;
+
     private static final Logger LOG = LoggerFactory.getLogger(StressClient.class);
 
     @Override
     public Void call() throws Exception
     {
-        final String channel = "aeron:udp?endpoint=127.0.0.1:2000|mtu=1408";
+        final String channel = "aeron:udp?endpoint=" + subEndpoint + "|mtu=1408";
         final int stream = 10;
         final IdleStrategy idleStrategyReceive = new BusySpinIdleStrategy();
         final ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
