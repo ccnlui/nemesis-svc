@@ -4,7 +4,9 @@ import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
 import org.agrona.concurrent.Agent;
+import org.agrona.concurrent.EpochNanoClock;
 import org.agrona.concurrent.NanoClock;
+import org.agrona.concurrent.SystemEpochNanoClock;
 import org.agrona.concurrent.SystemNanoClock;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.slf4j.Logger;
@@ -21,6 +23,7 @@ public class SendAgent implements Agent
     private final UnsafeBuffer unsafeBuffer;
 
     private final NanoClock clock = new SystemNanoClock();
+    private final EpochNanoClock epochClock = new SystemEpochNanoClock();
     private final long intervalNs;
     private final long startTimeNs = clock.nanoTime();
     private long nowNs = startTimeNs;
@@ -41,7 +44,7 @@ public class SendAgent implements Agent
     {
         if (pub.isConnected() && onScheduleSend())
         {
-            long epochNs = nowNano();
+            long epochNs = epochClock.nanoTime();
             msg.setTimestamp(epochNs - 1_000_000L);
             msg.setReceivedAt(epochNs);
 
@@ -89,11 +92,5 @@ public class SendAgent implements Agent
             return true;
         }
         return false;
-    }
-
-    private long nowNano()
-    {
-        Instant now = Instant.now();
-        return now.getEpochSecond() * 1_000_000_000L + now.getNano();
     }
 }

@@ -2,8 +2,14 @@ package nemesis.svc;
 
 import java.nio.ByteBuffer;
 
+import org.HdrHistogram.Histogram;
 import org.agrona.DirectBuffer;
 import org.agrona.concurrent.Agent;
+import org.agrona.concurrent.EpochNanoClock;
+import org.agrona.concurrent.NanoClock;
+import org.agrona.concurrent.ShutdownSignalBarrier;
+import org.agrona.concurrent.SystemEpochNanoClock;
+import org.agrona.concurrent.SystemNanoClock;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,16 +29,29 @@ public class ReceiveAgent implements Agent
     private final UnsafeBuffer unsafeBuffer;
     private final Quote quote;
     private final Trade trade;
+    private final Histogram histogram;
     private final FragmentHandler assembler;
+    private final ShutdownSignalBarrier barrier;
+
+    private final NanoClock clock = new SystemNanoClock();
+    private final EpochNanoClock epochClock = new SystemEpochNanoClock();
+    private long nowNs = clock.nanoTime();
+    private final long startTimeNs = nowNs + 10_000_000_000L;
+    private final long endTimeNs = nowNs + 30_000_000_000L;
     
 
-    public ReceiveAgent(final Subscription sub)
-    {
+    public ReceiveAgent(
+        final Subscription sub,
+        final Histogram histogram,
+        final ShutdownSignalBarrier barrier
+    ) {
         this.sub = sub;
         this.unsafeBuffer = new UnsafeBuffer(ByteBuffer.allocateDirect(Message.MAX_SIZE));
         this.quote = new Quote();
         this.trade = new Trade();
+        this.histogram = histogram;
         this.assembler = new FragmentAssembler(this::onMessage);
+        this.barrier = barrier;
     }
 
     private void onMessage(DirectBuffer buffer, int offset, int length, Header header)
@@ -44,12 +63,20 @@ public class ReceiveAgent implements Agent
         {
         case Message.QUOTE:
             this.quote.fromByteBuffer(unsafeBuffer.byteBuffer());
-            LOG.info("quote: {}", quote.receivedAt());
+            if (this.onScheduleMeasure())
+            {
+                histogram.recordValue(epochClock.nanoTime() - quote.receivedAt());
+            }
+            // LOG.info("quote: {}", quote.receivedAt());
             break;
 
         case Message.TRADE:
             this.trade.fromByteBuffer(unsafeBuffer.byteBuffer());
-            LOG.info("trade: {}", trade.receivedAt());
+            if (this.onScheduleMeasure())
+            {
+                histogram.recordValue(epochClock.nanoTime() - trade.receivedAt());
+            }
+            // LOG.info("trade: {}", trade.receivedAt());
             break;
 
         default:
@@ -61,6 +88,10 @@ public class ReceiveAgent implements Agent
     public int doWork() throws Exception
     {
         this.sub.poll(this.assembler, 10);
+        if (endTimeNs <= nowNs)
+        {
+            barrier.signal();
+        }
         return 0;
     }
 
@@ -68,5 +99,15 @@ public class ReceiveAgent implements Agent
     public String roleName()
     {
         return "receiver";
+    }
+
+    private boolean onScheduleMeasure()
+    {
+        nowNs = clock.nanoTime();
+        if (startTimeNs <= nowNs)
+        {
+            return true;
+        }
+        return false;
     }
 }

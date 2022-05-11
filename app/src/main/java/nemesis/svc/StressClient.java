@@ -1,7 +1,9 @@
 package nemesis.svc;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
+import org.HdrHistogram.Histogram;
 import org.agrona.concurrent.AgentRunner;
 import org.agrona.concurrent.BusySpinIdleStrategy;
 import org.agrona.concurrent.IdleStrategy;
@@ -56,7 +58,8 @@ public class StressClient implements Callable<Void>
         final Subscription sub = aeron.addSubscription(channel, stream);
 
         // construct the agents
-        final ReceiveAgent receiveAgent = new ReceiveAgent(sub);
+        Histogram histogram = new Histogram(TimeUnit.MINUTES.toNanos(1), 3);
+        final ReceiveAgent receiveAgent = new ReceiveAgent(sub, histogram, barrier);
         final AgentRunner agentRunner = new AgentRunner(
             idleStrategyReceive,
             Throwable::printStackTrace,
@@ -74,6 +77,9 @@ public class StressClient implements Callable<Void>
         agentRunner.close();
         aeron.close();
         mediaDriver.close();
+
+        LOG.info("---------- stressClientInDelay (us) ----------");
+        histogram.outputPercentileDistribution(System.out, 1000.0);  // output in us
 
         return null;
     }
