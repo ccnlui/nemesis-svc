@@ -21,7 +21,12 @@ public class Trade implements Message
 
     public Trade()
     {
-        this.buf = ByteBuffer.allocateDirect(MAX_SIZE);
+    }
+
+    public Trade(ByteBuffer buf)
+    {
+        this.buf = buf;
+        this.buf.put(0, (byte) Message.TRADE);
     }
 
     @Override
@@ -52,5 +57,10 @@ public class Trade implements Message
     public void setReceivedAt(long timestamp)
     {
         buf.putLong(46, timestamp);
+    }
+
+    public long receivedAt()
+    {
+        return buf.getLong(46);
     }
 }

@@ -25,7 +25,12 @@ public class Quote implements Message
 
     public Quote()
     {
-        this.buf = ByteBuffer.allocateDirect(MAX_SIZE);
+    }
+
+    public Quote(ByteBuffer buf)
+    {
+        this.buf = buf;
+        this.buf.put(0, (byte) Message.QUOTE);
     }
 
     @Override
@@ -56,5 +61,10 @@ public class Quote implements Message
     public void setReceivedAt(long timestamp)
     {
         buf.putLong(50, timestamp);
+    }
+
+    public long receivedAt()
+    {
+        return buf.getLong(50);
     }
 }

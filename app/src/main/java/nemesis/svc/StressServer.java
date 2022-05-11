@@ -1,5 +1,6 @@
 package nemesis.svc;
 
+import java.nio.ByteBuffer;
 import java.util.concurrent.Callable;
 
 import org.agrona.concurrent.AgentRunner;
@@ -21,16 +22,16 @@ import picocli.CommandLine.Option;
 
 @Command
 (
-    name = "stressor",
+    name = "stress-server",
     description = "produce and publish quote + trade messages",
     usageHelpAutoWidth = true
 )
-public class Stressor implements Callable<Void>
+public class StressServer implements Callable<Void>
 {
     @Option(names = {"-h", "--help"}, usageHelp = true, description = "help message")
     boolean help;
 
-    private static final Logger LOG = LoggerFactory.getLogger(Stressor.class);
+    private static final Logger LOG = LoggerFactory.getLogger(StressServer.class);
 
     @Override
     public Void call() throws Exception
@@ -55,12 +56,12 @@ public class Stressor implements Callable<Void>
 
         LOG.info("Dir: {}", mediaDriver.aeronDirectoryName());
 
-        // construct the subs and pubs
+        // construct the publication
         final Publication pub = aeron.addPublication(channel, stream);
 
         // construct the agents
-        Quote quote = new Quote();
-        Trade trade = new Trade();
+        Quote quote = new Quote(ByteBuffer.allocateDirect(Quote.MAX_SIZE));
+        Trade trade = new Trade(ByteBuffer.allocateDirect(Trade.MAX_SIZE));
 
         final SendAgent sendQuotes = new SendAgent(pub, quote, 100_000L);
         final SendAgent sendTrades = new SendAgent(pub, trade, 200_000L);

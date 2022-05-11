@@ -8,7 +8,8 @@ package nemesis.svc.message;
 public interface Message
 {
     public static int QUOTE = 0;
-    public static int TRADE = 0;
+    public static int TRADE = 1;
+    public static int MAX_SIZE = 128;
 
     public abstract void fromByteBuffer(java.nio.ByteBuffer buf);
 
