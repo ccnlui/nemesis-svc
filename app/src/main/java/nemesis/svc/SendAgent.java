@@ -45,9 +45,10 @@ public class SendAgent implements Agent
             msg.setTimestamp(epochNs - 1_000_000L);
             msg.setReceivedAt(epochNs);
 
-            if (pub.offer(unsafeBuffer) < 0)
+            long pos = pub.offer(unsafeBuffer);
+            if (pos < 0)
             {
-                LOG.error("failed to send message");
+                LOG.error("failed to send message: {}", Publication.errorString(pos));
             }
             sentMsg += 1;
         }
