@@ -18,6 +18,7 @@ public class Nemesis {
         cmd.addSubcommand("reader", Reader.class);
         cmd.addSubcommand("publisher", Publisher.class);
         cmd.addSubcommand("subscriber", Subscriber.class);
+        cmd.addSubcommand("stressor", Stressor.class);
         System.exit(cmd.execute(args));
 
     }

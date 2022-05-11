@@ -40,11 +40,15 @@ dependencies {
 
     // HdrHistogram
     implementation 'org.hdrhistogram:HdrHistogram:2.1.12'
+    
+    // Agrona
+    implementation 'org.agrona:agrona:1.15.1'
 
     // Aeron
     implementation 'io.aeron:aeron-client:1.38.1'
     implementation 'io.aeron:aeron-driver:1.38.1'
     implementation 'io.aeron:aeron-agent:1.38.1'
+
 }
 
 application {
