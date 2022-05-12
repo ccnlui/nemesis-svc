@@ -123,6 +123,8 @@ public class StressServer implements Callable<Void>
             .idleStrategy(new NoOpIdleStrategy());
         if (aeronDirName != null)
             aeronCtx = aeronCtx.aeronDirectoryName(aeronDirName);
+        else if (aeronDir != null)
+            aeronCtx = aeronCtx.aeronDirectoryName(aeronDir);
         LOG.info(aeronCtx.toString());
 
         final Aeron aeron = Aeron.connect(aeronCtx);

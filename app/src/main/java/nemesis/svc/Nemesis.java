@@ -20,6 +20,7 @@ public class Nemesis {
         cmd.addSubcommand("subscriber", Subscriber.class);
         cmd.addSubcommand("stress-server", StressServer.class);
         cmd.addSubcommand("stress-client", StressClient.class);
+        cmd.addSubcommand("counter", Counter.class);
         System.exit(cmd.execute(args));
 
     }
