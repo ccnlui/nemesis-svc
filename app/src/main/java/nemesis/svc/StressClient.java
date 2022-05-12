@@ -7,6 +7,7 @@ import org.HdrHistogram.Histogram;
 import org.agrona.concurrent.AgentRunner;
 import org.agrona.concurrent.BusySpinIdleStrategy;
 import org.agrona.concurrent.IdleStrategy;
+import org.agrona.concurrent.NoOpIdleStrategy;
 import org.agrona.concurrent.ShutdownSignalBarrier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +38,9 @@ public class StressClient implements Callable<Void>
         defaultValue = "${SUB_ENDPOINT:-127.0.0.1:2000}",
         description = "endpoint from which messages are subscribed in address:port format (default: \"${DEFAULT-VALUE}\")")
     String subEndpoint;
+
+    @Option(names = "--aeron-dir", description = "override directory name for embedded aeron media driver")
+    String aeronDir;
 
     private static final Logger LOG = LoggerFactory.getLogger(StressClient.class);
 
@@ -86,11 +90,15 @@ public class StressClient implements Callable<Void>
     {
         if (embeddedMediaDriver)
         {
-            final MediaDriver.Context mediaDriverCtx = new MediaDriver.Context()
+            MediaDriver.Context mediaDriverCtx = new MediaDriver.Context()
                 .dirDeleteOnStart(true)
-                .threadingMode(ThreadingMode.SHARED)
-                .sharedIdleStrategy(new BusySpinIdleStrategy())
+                .threadingMode(ThreadingMode.DEDICATED)
+                .conductorIdleStrategy(new BusySpinIdleStrategy())
+                .senderIdleStrategy(new NoOpIdleStrategy())
+                .receiverIdleStrategy(new NoOpIdleStrategy())
                 .dirDeleteOnShutdown(true);
+            if (aeronDir != null)
+                mediaDriverCtx = mediaDriverCtx.aeronDirectoryName(aeronDir);
             MediaDriver md = MediaDriver.launchEmbedded(mediaDriverCtx);
 
             LOG.info(mediaDriverCtx.toString());
@@ -101,11 +109,10 @@ public class StressClient implements Callable<Void>
 
     private Aeron connectAeron(String aeronDirName)
     {
-        Aeron.Context aeronCtx;
-        if (aeronDirName == null)
-            aeronCtx = new Aeron.Context();
-        else
-            aeronCtx = new Aeron.Context().aeronDirectoryName(aeronDirName);
+        Aeron.Context aeronCtx = new Aeron.Context()
+            .idleStrategy(new NoOpIdleStrategy());
+        if (aeronDirName != null)
+            aeronCtx = aeronCtx.aeronDirectoryName(aeronDirName);
         LOG.info(aeronCtx.toString());
 
         final Aeron aeron = Aeron.connect(aeronCtx);
