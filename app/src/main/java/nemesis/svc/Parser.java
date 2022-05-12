@@ -1,5 +1,7 @@
 package nemesis.svc;
 
+import java.nio.ByteBuffer;
+
 import org.agrona.concurrent.NanoClock;
 import org.agrona.concurrent.SystemNanoClock;
 import org.slf4j.Logger;
@@ -21,6 +23,7 @@ public class Parser
     private long lastSequenceNumber = -1;
     private long missedMessages = 0;
     private long unexpectedBlocks = 0;
+    private long lineIntegrityMessages = 0;
 
     private long INT_TO_LONG_MASK = 0x00_00_00_00_FF_FF_FF_FF;
     private int BYTE_TO_INT_MASK = 0x00_00_00_FF;
@@ -28,11 +31,32 @@ public class Parser
     void onTransmissionBlock(TransmissionBlock block)
     {
         // block.parseHeader();
-
         long sequenceNumber = block.blockSequenceNumber() & INT_TO_LONG_MASK;
         int messagesInBlock = block.messagesInBlock() & BYTE_TO_INT_MASK;
 
-        // TODO: Skip control messages (?)
+        for (int i = 0; i < messagesInBlock; i++)
+        {
+            // block.parseMessageHeader();
+            if ((char) block.currMessageCategory() == 'C')
+            {
+                switch ((char) block.currMessageType())
+                {
+                // Reset block sequence number
+                // Start of day, End of day
+                case 'L', 'A', 'Z':
+                    lastSequenceNumber = -1;
+                    break;
+
+                // Line integrity
+                case 'T':
+                    lastSequenceNumber -= 1;
+                    lineIntegrityMessages += 1;
+                    break;
+                }
+            }
+            block.nextMessage();
+        }
+
         // Only start checking after receving first valid block.
         if (lastSequenceNumber > 0)
         {
@@ -51,10 +75,6 @@ public class Parser
         receivedBlocks += 1;
         receivedMessages += messagesInBlock;
         lastSequenceNumber = sequenceNumber + messagesInBlock;
-
-        // TODO: Check category C type L message (reset block sequence number)
-        // TODO: Check category C type A, Z message (start of day, end of day)
-        // TODO: Check category C type T message (line integrity)
     }
 
     boolean onScheduleReport()
@@ -71,10 +91,11 @@ public class Parser
     void reportCounters()
     {
         LOG.info("-------------------------------------------------------------");
-        LOG.info("     received blocks = {}", receivedBlocks);
-        LOG.info("   received messages = {}", receivedMessages);
-        LOG.info("    missing messages = {}", missedMessages);
-        LOG.info("   unexpected blocks = {}", unexpectedBlocks);
-        LOG.info("last sequence number = {}", lastSequenceNumber);
+        LOG.info("        received blocks = {}", receivedBlocks);
+        LOG.info("      received messages = {}", receivedMessages);
+        LOG.info("       missing messages = {}", missedMessages);
+        LOG.info("      unexpected blocks = {}", unexpectedBlocks);
+        LOG.info("   last sequence number = {}", lastSequenceNumber);
+        LOG.info("line integrity messages = {}", lineIntegrityMessages);
     }
 }
