@@ -1,4 +1,4 @@
-package nemesis.svc;
+package nemesis.svc.agent;
 
 import java.util.concurrent.TimeUnit;
 
@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.aeron.Publication;
-import io.aeron.exceptions.AeronException;
 import nemesis.svc.message.Message;
 
 public class SendAgent implements Agent
@@ -51,7 +50,7 @@ public class SendAgent implements Agent
             long pos;
             while ((pos = pub.offer(unsafeBuffer)) <= 0)
             {
-                if (!retryPublicationResult(pos))
+                if (!AgentUtil.retryPublicationResult(pos))
                     break;
             }
             sentMsg += 1;
@@ -64,29 +63,7 @@ public class SendAgent implements Agent
         return 0;
     }
 
-    private boolean retryPublicationResult(final long result)
-    {
-        if (result == Publication.ADMIN_ACTION)
-        {
-            return true;
-        }
-        else if (result == Publication.BACK_PRESSURED)
-        {
-            return false;
-        }
-        else if (result == Publication.CLOSED || 
-            result == Publication.MAX_POSITION_EXCEEDED ||
-            result == Publication.NOT_CONNECTED)
-        {
-            LOG.error("failed to send message: {}", Publication.errorString(result));
-            throw new AeronException("Publication error: " + Publication.errorString(result));
-        }
-        else
-        {
-            LOG.error("unknown publication result: {}", result);
-        }
-        return false;
-    }
+    
 
     @Override
     public String roleName()

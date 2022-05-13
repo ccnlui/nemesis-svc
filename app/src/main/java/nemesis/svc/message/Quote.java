@@ -2,6 +2,8 @@ package nemesis.svc.message;
 
 import java.nio.ByteBuffer;
 
+import org.agrona.concurrent.UnsafeBuffer;
+
 // class Quote
 // {
 //     byte   type;                    //  1 byte  (offset 0)
@@ -63,8 +65,22 @@ public class Quote implements Message
         buf.putLong(50, timestamp);
     }
 
+    public long timestamp()
+    {
+        return buf.getLong(16);
+    }
+
     public long receivedAt()
     {
         return buf.getLong(50);
+    }
+
+    public int toMessageJson(UnsafeBuffer out)
+    {
+        int pos = 0;
+        pos += out.putStringWithoutLengthAscii(pos, "[{\"T\":\"q\",\"tn\":");
+        pos += out.putLongAscii(pos, timestamp());
+        pos += out.putStringWithoutLengthAscii(pos, "}]");
+        return pos;
     }
 }

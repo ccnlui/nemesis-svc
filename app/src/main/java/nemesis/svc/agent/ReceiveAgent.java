@@ -1,4 +1,4 @@
-package nemesis.svc;
+package nemesis.svc.agent;
 
 import java.nio.ByteBuffer;
 
@@ -87,12 +87,12 @@ public class ReceiveAgent implements Agent
     @Override
     public int doWork() throws Exception
     {
-        this.sub.poll(this.assembler, 10);
+        int fragmentReceived = this.sub.poll(this.assembler, 10);
         if (endTimeNs <= nowNs)
         {
             barrier.signal();
         }
-        return 0;
+        return fragmentReceived;
     }
 
     @Override

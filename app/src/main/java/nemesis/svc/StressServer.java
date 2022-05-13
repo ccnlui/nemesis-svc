@@ -16,6 +16,7 @@ import io.aeron.Aeron;
 import io.aeron.Publication;
 import io.aeron.driver.MediaDriver;
 import io.aeron.driver.ThreadingMode;
+import nemesis.svc.agent.SendAgent;
 import nemesis.svc.message.Quote;
 import nemesis.svc.message.Trade;
 import picocli.CommandLine.Command;

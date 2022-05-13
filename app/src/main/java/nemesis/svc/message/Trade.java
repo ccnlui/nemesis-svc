@@ -1,6 +1,8 @@
 package nemesis.svc.message;
 import java.nio.ByteBuffer;
 
+import org.agrona.concurrent.UnsafeBuffer;
+
 // class Trade
 // {
 //     byte   type;                    //  1 byte  (offset 0)
@@ -59,8 +61,22 @@ public class Trade implements Message
         buf.putLong(46, timestamp);
     }
 
+    public long timestamp()
+    {
+        return buf.getLong(24);
+    }
+
     public long receivedAt()
     {
         return buf.getLong(46);
+    }
+
+    public int toMessageJson(UnsafeBuffer out)
+    {
+        int pos = 0;
+        pos += out.putStringWithoutLengthAscii(pos, "[{\"T\":\"t\",\"tn\":");
+        pos += out.putLongAscii(pos, timestamp());
+        pos += out.putStringWithoutLengthAscii(pos, "}]");
+        return pos;
     }
 }

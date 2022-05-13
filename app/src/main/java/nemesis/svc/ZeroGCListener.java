@@ -19,7 +19,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 @Command(name = "zgc-listener", usageHelpAutoWidth = true,
-    description = "subscribe to marketdata multicast and count sequence numbers")
+    description = "subscribe to marketdata multicast without generate garbage")
 public class ZeroGCListener implements Callable<Void>
 {
     @Option(names = {"-h", "--help"}, usageHelp = true, description = "help message")
