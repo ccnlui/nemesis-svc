@@ -1,6 +1,5 @@
 package nemesis.svc;
 
-import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
 import org.agrona.concurrent.Agent;
