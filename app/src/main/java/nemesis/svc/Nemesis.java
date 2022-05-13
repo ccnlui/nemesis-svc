@@ -21,6 +21,7 @@ public class Nemesis {
         cmd.addSubcommand("stress-server", StressServer.class);
         cmd.addSubcommand("stress-client", StressClient.class);
         cmd.addSubcommand("counter", Counter.class);
+        cmd.addSubcommand("zgc-listener", ZeroGCListener.class);
         System.exit(cmd.execute(args));
 
     }
