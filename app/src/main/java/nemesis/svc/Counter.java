@@ -63,7 +63,6 @@ public class Counter implements Callable<Void>
         final Selector sel = Selector.open();  // unused
         final Parser parser = new Parser();
 
-        LOG.info("subscribe to: {}:{}", addr, port);
         subscribe(addr, port, sel, subscribedGroups);
 
         // Only works because we have 1 channel.
@@ -94,6 +93,7 @@ public class Counter implements Callable<Void>
     {
         DatagramChannel ch = DatagramChannel.open(StandardProtocolFamily.INET)
             .setOption(StandardSocketOptions.SO_REUSEADDR, true)
+            .setOption(StandardSocketOptions.SO_RCVBUF, Integer.MAX_VALUE)
             .bind(new InetSocketAddress(port));  // bind to wildcard address
         ch.configureBlocking(false);
         NetworkInterface iface = NetworkInterface.getByName(networkInterface);
@@ -103,7 +103,6 @@ public class Counter implements Callable<Void>
         ch.join(group, iface);
         ch.register(sel, SelectionKey.OP_READ);
         subscribedGroups.put(ch, addr + ":" + port);
+        LOG.info("subscribed to: {}:{} rcvbuf: {}", addr, port, ch.getOption(StandardSocketOptions.SO_RCVBUF));
     }
-
-    
 }
