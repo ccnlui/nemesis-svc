@@ -24,6 +24,7 @@ public class Nemesis
         cmd.addSubcommand("zgc-listener", ZeroGCListener.class);
         cmd.addSubcommand("connector", Connector.class);
         cmd.addSubcommand("marshaller", Marshaller.class);
+        cmd.addSubcommand("broadcaster", Broadcaster.class);
         System.exit(cmd.execute(args));
     }
 }

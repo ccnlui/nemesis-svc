@@ -49,6 +49,8 @@ dependencies {
     implementation 'io.aeron:aeron-driver:1.38.1'
     implementation 'io.aeron:aeron-agent:1.38.1'
 
+    // TooTallNate/Java-WebSocket
+    implementation 'org.java-websocket:Java-WebSocket:1.5.3'
 }
 
 application {
