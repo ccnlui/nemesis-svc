@@ -80,6 +80,7 @@ public class Broadcaster implements Callable<Void>
                 final String configPath = "/home/calvin/source/java/nemesis-svc/babl-performance.properties";
                 final BablConfig config = PropertiesLoader.configure(Paths.get(configPath));
                 final BablStreamServer bablStreamServer = new BablStreamServer();
+                config.applicationConfig().application(bablStreamServer);  // this is needed for broadcast to work, for some reasons...
 
                 // construct the agents
                 final BablBroadcastAgent bablBroadcastAgent = new BablBroadcastAgent(sub, bablStreamServer);
@@ -93,6 +94,7 @@ public class Broadcaster implements Callable<Void>
                 LOG.info("starting babl broadcaster");
                 containers = BablServer.launch(config);
                 containers.start();
+                bablStreamServer.createBroadcastTopic();
                 AgentRunner.startOnThread(agentRunner);
             }
                 

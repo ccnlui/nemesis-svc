@@ -22,13 +22,13 @@ public class BablStreamServer implements Application, BroadcastSource
     private static int BROADCAST_TOPIC = 42;
 
     private final MutableDirectBuffer buffer = new ExpandableDirectByteBuffer(512);
-    private Broadcast broadcastHandler;
+    private Broadcast broadcast;
 
     @Override
     public int onSessionConnected(Session session)
     {
         LOG.info("connected: {}", session.toString());
-        broadcastHandler.addToTopic(BROADCAST_TOPIC, session.id());
+        broadcast.addToTopic(BROADCAST_TOPIC, session.id());
         return SendResult.OK;
     }
 
@@ -39,7 +39,7 @@ public class BablStreamServer implements Application, BroadcastSource
             session.toString(),
             reason.toString()
         );
-        broadcastHandler.removeFromTopic(BROADCAST_TOPIC, session.id());
+        broadcast.removeFromTopic(BROADCAST_TOPIC, session.id());
         return SendResult.OK;
     }
 
@@ -62,18 +62,19 @@ public class BablStreamServer implements Application, BroadcastSource
     }
 
     @Override
-    public void setBroadcast(Broadcast broadcast)
+    public void setBroadcast(final Broadcast broadcast)
     {
-        this.broadcastHandler = broadcast;
+        LOG.info("setBroadcast(): {}", broadcast);
+        this.broadcast = broadcast;
     }
 
     public void createBroadcastTopic()
     {
-        this.broadcastHandler.createTopic(BROADCAST_TOPIC);
+        this.broadcast.createTopic(BROADCAST_TOPIC);
     }
 
     public int broadcast(DirectBuffer buffer, int offset, int length, Header header)
     {
-        return this.broadcastHandler.sendToTopic(BROADCAST_TOPIC, ContentType.TEXT, buffer, offset, length);
+        return this.broadcast.sendToTopic(BROADCAST_TOPIC, ContentType.TEXT, buffer, offset, length);
     }
 }
