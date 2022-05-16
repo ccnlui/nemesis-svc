@@ -44,6 +44,7 @@ public class BroadcastAgent implements Agent
     {
         this.outBuf.clear();
         buffer.getBytes(offset, outBuf, 0, length);
+        this.outBuf.limit(length);
         streamServer.broadcast(outBuf);
         broadcastedMsg += 1;
     }
