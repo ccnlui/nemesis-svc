@@ -1,5 +1,6 @@
 package nemesis.svc;
 
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
@@ -25,6 +26,7 @@ import io.aeron.driver.MediaDriver;
 import io.aeron.driver.ThreadingMode;
 import nemesis.svc.agent.BablBroadcastAgent;
 import nemesis.svc.agent.BroadcastAgent;
+import net.openhft.chronicle.core.OS;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -77,8 +79,9 @@ public class Broadcaster implements Callable<Void>
             case "babl" ->
             {
                 // construct babl server
-                final String configPath = "/home/calvin/source/java/nemesis-svc/babl-default.properties";
+                final String configPath = System.getProperty("user.dir") + "/build/resources/main/babl-default.properties";
                 // final String configPath = "/home/calvin/source/java/nemesis-svc/babl-performance.properties";
+                LOG.info("configPath: {}", configPath);
                 final BablConfig config = PropertiesLoader.configure(Paths.get(configPath));
                 final BablStreamServer bablStreamServer = new BablStreamServer();
                 config.applicationConfig().application(bablStreamServer);  // this is needed to register broadcastSource
