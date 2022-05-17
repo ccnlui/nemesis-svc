@@ -16,6 +16,11 @@ repositories {
     mavenCentral()
 }
 
+java {
+    sourceCompatibility = "17"
+    targetCompatibility = "17"
+}
+
 dependencies {
     // Use JUnit Jupiter for testing.
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
@@ -51,6 +56,9 @@ dependencies {
 
     // TooTallNate/Java-WebSocket
     implementation 'org.java-websocket:Java-WebSocket:1.5.3'
+
+    // Babl websocket
+    implementation 'com.aitusoftware:babl:0.11.0'
 }
 
 application {
@@ -70,8 +78,8 @@ application {
         // "-Xlog:gc*::time",
 
         // Heap size.
-        "-XX:InitialHeapSize=64m",
-        "-XX:MaxHeapSize=64m",
+        // "-XX:InitialHeapSize=64m",
+        // "-XX:MaxHeapSize=64m",
 
         // JDK 17 Strongly Encapsulated JDK Internals
         // chronicle

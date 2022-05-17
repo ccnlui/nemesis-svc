@@ -41,7 +41,9 @@ public class Parser
                 {
                 // Reset block sequence number
                 // Start of day, End of day
-                case 'L', 'A', 'Z':
+                case 'L':
+                case 'A':
+                case 'Z':
                     lastSequenceNumber = -1;
                     break;
 
