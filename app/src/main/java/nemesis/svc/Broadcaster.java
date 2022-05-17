@@ -1,13 +1,10 @@
 package nemesis.svc;
 
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
 import com.aitusoftware.babl.config.BablConfig;
 import com.aitusoftware.babl.config.PropertiesLoader;
-import com.aitusoftware.babl.user.ContentType;
 import com.aitusoftware.babl.websocket.BablServer;
 import com.aitusoftware.babl.websocket.SessionContainers;
 
@@ -16,7 +13,6 @@ import org.agrona.concurrent.BusySpinIdleStrategy;
 import org.agrona.concurrent.IdleStrategy;
 import org.agrona.concurrent.NoOpIdleStrategy;
 import org.agrona.concurrent.ShutdownSignalBarrier;
-import org.agrona.concurrent.UnsafeBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +22,6 @@ import io.aeron.driver.MediaDriver;
 import io.aeron.driver.ThreadingMode;
 import nemesis.svc.agent.BablBroadcastAgent;
 import nemesis.svc.agent.BroadcastAgent;
-import net.openhft.chronicle.core.OS;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -46,6 +41,10 @@ public class Broadcaster implements Callable<Void>
     @Option(names = "--aeron-dir", description = "override directory name for embedded aeron media driver")
     String aeronDir;
 
+    @Option(names = "--sub-endpoint", defaultValue = "",
+        description = "aeron udp transport endpoint from which messages are subscribed in address:port format (default: \"${DEFAULT-VALUE}\")")
+    String subEndpoint;
+
     @Option(names = "--port", defaultValue = "${PORT:-8080}",
         description = "websocket server port (default: ${DEFAULT-VALUE})")
     int port;
@@ -59,7 +58,7 @@ public class Broadcaster implements Callable<Void>
     @Override
     public Void call() throws Exception
     {
-        final String inChannel = "aeron:ipc";
+        final String inChannel = aeronIpcOrUdpChannel(subEndpoint);
         final int inStream = 12;
         final IdleStrategy idleStrategy = new BusySpinIdleStrategy();
         final ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
@@ -90,7 +89,7 @@ public class Broadcaster implements Callable<Void>
                 final BablBroadcastAgent bablBroadcastAgent = new BablBroadcastAgent(sub, bablStreamServer);
                 config.applicationConfig().additionalWork(bablBroadcastAgent);
 
-                LOG.info("starting babl broadcaster");
+                LOG.info("babl broadcaster: in: {}:{}", inChannel, inStream);
                 containers = BablServer.launch(config);
                 containers.start();
                 bablStreamServer.createBroadcastTopic();
@@ -110,7 +109,7 @@ public class Broadcaster implements Callable<Void>
                     broadcastAgent
                 );
 
-                LOG.info("starting java-websocket broadcaster");
+                LOG.info("java-websocket broadcaster: in channel:stream: {}:{}", inChannel, inStream);
                 streamServer.start();
                 AgentRunner.startOnThread(agentRunner);
             }
@@ -161,6 +160,18 @@ public class Broadcaster implements Callable<Void>
 
         final Aeron aeron = Aeron.connect(aeronCtx);
         return aeron;
+    }
+
+    private String aeronIpcOrUdpChannel(String endpoint)
+    {
+        if (endpoint == null || endpoint.isEmpty())
+        {
+            return "aeron:ipc";
+        }
+        else
+        {
+            return "aeron:udp?endpoint=" + endpoint + "|mtu=1408";
+        }
     }
 
     private void closeIfNotNull(final AutoCloseable closeable) throws Exception

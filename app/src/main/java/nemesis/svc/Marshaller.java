@@ -35,6 +35,10 @@ public class Marshaller implements Callable<Void>
     @Option(names = "--aeron-dir", description = "override directory name for embedded aeron media driver")
     String aeronDir;
 
+    @Option(names = "--pub-endpoint", defaultValue = "",
+        description = "aeron udp transport endpoint to which messages are published in address:port format (default: \"${DEFAULT-VALUE}\")")
+    String pubEndpoint;
+
     private static final Logger LOG = LoggerFactory.getLogger(Marshaller.class);
 
     @Override
@@ -42,7 +46,7 @@ public class Marshaller implements Callable<Void>
     {
         final String inChannel = "aeron:ipc";
         final int inStream = 11;
-        final String outChannel = "aeron:ipc";
+        final String outChannel = aeronIpcOrUdpChannel(pubEndpoint);
         final int outStream = 12;
         final IdleStrategy idleStrategy = new BusySpinIdleStrategy();
         final ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
@@ -64,7 +68,8 @@ public class Marshaller implements Callable<Void>
             marshalAgent
         );
 
-        LOG.info("starting marshaller");
+        LOG.info("marshaller: in: {}:{}", inChannel, inStream);
+        LOG.info("marshaller: out: {}:{}", outChannel, outStream);
         AgentRunner.startOnThread(agentRunner);
 
         // wait for the shutdown signal
@@ -111,6 +116,18 @@ public class Marshaller implements Callable<Void>
 
         final Aeron aeron = Aeron.connect(aeronCtx);
         return aeron;
+    }
+
+    private String aeronIpcOrUdpChannel(String endpoint)
+    {
+        if (endpoint == null || endpoint.isEmpty())
+        {
+            return "aeron:ipc";
+        }
+        else
+        {
+            return "aeron:udp?endpoint=" + endpoint + "|mtu=1408";
+        }
     }
 
     private void closeIfNotNull(final AutoCloseable closeable) throws Exception

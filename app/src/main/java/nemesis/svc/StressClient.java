@@ -69,7 +69,7 @@ public class StressClient implements Callable<Void>
             receiveAgent
         );
 
-        LOG.info("starting");
+        LOG.info("stress client: in: {}:{}", channel, stream);
         AgentRunner.startOnThread(agentRunner);
 
         // wait for the shutdown signal

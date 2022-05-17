@@ -35,7 +35,7 @@ public class Connector implements Callable<Void>
     boolean embeddedMediaDriver;
 
     @Option(names = "--sub-endpoint", defaultValue = "${SUB_ENDPOINT:-127.0.0.1:2000}",
-        description = "endpoint from which messages are subscribed in address:port format (default: \"${DEFAULT-VALUE}\")")
+        description = "aeron udp transport endpoint from which messages are subscribed in address:port format (default: \"${DEFAULT-VALUE}\")")
     String subEndpoint;
 
     @Option(names = "--aeron-dir", description = "override directory name for embedded aeron media driver")
@@ -71,7 +71,8 @@ public class Connector implements Callable<Void>
             pipeAgent
         );
 
-        LOG.info("starting connector");
+        LOG.info("connector: in: {}:{}", inChannel, inStream);
+        LOG.info("connector: out: {}:{}", outChannel, outStream);
         AgentRunner.startOnThread(agentRunner);
 
         // wait for the shutdown signal

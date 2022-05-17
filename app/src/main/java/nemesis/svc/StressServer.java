@@ -50,7 +50,7 @@ public class StressServer implements Callable<Void>
 
     @Option(names = "--pub-endpoint",
         defaultValue = "${PUB_ENDPOINT:-127.0.0.1:2000}",
-        description = "endpoint to which messages are published in address:port format (default: \"${DEFAULT-VALUE}\")")
+        description = "aeron udp transport endpoint to which messages are published in address:port format (default: \"${DEFAULT-VALUE}\")")
     String pubEndpoint;
 
     private static final Logger LOG = LoggerFactory.getLogger(StressServer.class);
@@ -83,7 +83,7 @@ public class StressServer implements Callable<Void>
             new CompositeAgent(sendQuotes, sendTrades)
         );
 
-        LOG.info("starting");
+        LOG.info("stress server: out: {}:{}", channel, stream);
         AgentRunner.startOnThread(agentRunner);
 
         // wait for the shutdown signal
