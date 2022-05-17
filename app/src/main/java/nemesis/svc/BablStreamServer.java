@@ -1,5 +1,7 @@
 package nemesis.svc;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.aitusoftware.babl.user.Application;
 import com.aitusoftware.babl.user.BroadcastSource;
 import com.aitusoftware.babl.user.ContentType;
@@ -23,12 +25,17 @@ public class BablStreamServer implements Application, BroadcastSource
 
     private final MutableDirectBuffer buffer = new ExpandableDirectByteBuffer(512);
     private Broadcast broadcast;
+    private AtomicInteger numClients = new AtomicInteger(0);
 
     @Override
     public int onSessionConnected(Session session)
     {
         LOG.info("connected: {}", session.toString());
-        broadcast.addToTopic(BROADCAST_TOPIC, session.id());
+        if (broadcast != null)
+        {
+            numClients.incrementAndGet();
+            return broadcast.addToTopic(BROADCAST_TOPIC, session.id());
+        }
         return SendResult.OK;
     }
 
@@ -39,7 +46,11 @@ public class BablStreamServer implements Application, BroadcastSource
             session.toString(),
             reason.toString()
         );
-        broadcast.removeFromTopic(BROADCAST_TOPIC, session.id());
+        if (broadcast != null)
+        {
+            numClients.decrementAndGet();
+            return broadcast.removeFromTopic(BROADCAST_TOPIC, session.id());
+        }
         return SendResult.OK;
     }
 
@@ -66,6 +77,7 @@ public class BablStreamServer implements Application, BroadcastSource
     {
         LOG.info("setBroadcast(): {}", broadcast);
         this.broadcast = broadcast;
+        // broadcast.createBroadcastTopic(); // did not work
     }
 
     public void createBroadcastTopic()
@@ -76,5 +88,10 @@ public class BablStreamServer implements Application, BroadcastSource
     public int broadcast(DirectBuffer buffer, int offset, int length, Header header)
     {
         return this.broadcast.sendToTopic(BROADCAST_TOPIC, ContentType.TEXT, buffer, offset, length);
+    }
+
+    public int getNumClients()
+    {
+        return numClients.get();
     }
 }

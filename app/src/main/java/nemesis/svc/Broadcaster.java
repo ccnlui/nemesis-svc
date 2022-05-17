@@ -77,25 +77,20 @@ public class Broadcaster implements Callable<Void>
             case "babl" ->
             {
                 // construct babl server
-                final String configPath = "/home/calvin/source/java/nemesis-svc/babl-performance.properties";
+                final String configPath = "/home/calvin/source/java/nemesis-svc/babl-default.properties";
+                // final String configPath = "/home/calvin/source/java/nemesis-svc/babl-performance.properties";
                 final BablConfig config = PropertiesLoader.configure(Paths.get(configPath));
                 final BablStreamServer bablStreamServer = new BablStreamServer();
-                config.applicationConfig().application(bablStreamServer);  // this is needed for broadcast to work, for some reasons...
+                config.applicationConfig().application(bablStreamServer);  // this is needed to register broadcastSource
 
                 // construct the agents
                 final BablBroadcastAgent bablBroadcastAgent = new BablBroadcastAgent(sub, bablStreamServer);
-                agentRunner = new AgentRunner(
-                    idleStrategy,
-                    Throwable::printStackTrace,
-                    null,
-                    bablBroadcastAgent
-                );
+                config.applicationConfig().additionalWork(bablBroadcastAgent);
 
                 LOG.info("starting babl broadcaster");
                 containers = BablServer.launch(config);
                 containers.start();
                 bablStreamServer.createBroadcastTopic();
-                AgentRunner.startOnThread(agentRunner);
             }
                 
             case "java-websocket" ->

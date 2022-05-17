@@ -43,8 +43,16 @@ public class BablBroadcastAgent implements Agent
 
     private void onMessage(DirectBuffer buffer, int offset, int length, Header header)
     {
-        bablStreamServer.broadcast(buffer, offset, length, header);
-        broadcastedMsg += 1;
+        if (bablStreamServer.getNumClients() > 0)
+        {
+            long result;
+            while ((result = bablStreamServer.broadcast(buffer, offset, length, header)) <= 0)
+            {
+                if (!AgentUtil.retryPublicationResult(result))
+                    break;
+            }
+            broadcastedMsg += 1;
+        }
     }
 
     @Override
