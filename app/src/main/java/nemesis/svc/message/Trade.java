@@ -176,12 +176,12 @@ public class Trade implements Message
     @Override
     public int toMessageData(Format format, UnsafeBuffer out)
     {
-        switch (format)
+        int bytes = switch (format)
         {
             case MSGPACK -> toMessageMsgpack(out);
             case JSON -> toMessageJson(out);
-        }
-        return -1;
+        };
+        return bytes;
     }
 
     public int toMessageJson(UnsafeBuffer out)
