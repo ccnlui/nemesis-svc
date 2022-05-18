@@ -4,7 +4,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 
-import org.agrona.concurrent.EpochNanoClock;
 import org.agrona.concurrent.SystemEpochNanoClock;
 import org.agrona.concurrent.UnsafeBuffer;
 
@@ -49,6 +48,7 @@ public class Quote implements Message
         setBidSize(22);
         setNbbo((byte) 1);
         setTape((byte) 'A');
+
         SystemEpochNanoClock clock = new SystemEpochNanoClock();
         long epochNs = clock.nanoTime();
         setTimestamp(epochNs - 1_000_000L);
@@ -84,7 +84,7 @@ public class Quote implements Message
         for (i = 0; i < 11; i++)
         {
             byte b = buf.get(1+i);
-            if (b != (byte)' ')
+            if (MessageUtil.isAsciiPrintable(b))
                 sb.append((char) b);
             else
                 break;

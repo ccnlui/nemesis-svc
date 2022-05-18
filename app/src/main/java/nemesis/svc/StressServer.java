@@ -72,8 +72,9 @@ public class StressServer implements Callable<Void>
 
         // construct the agents
         Quote quote = new Quote();
+        Trade trade = new Trade();
         quote.setFakeValues(ByteBuffer.allocateDirect(Quote.MAX_SIZE));
-        Trade trade = new Trade(ByteBuffer.allocateDirect(Trade.MAX_SIZE));
+        trade.setFakeValues(ByteBuffer.allocateDirect(Trade.MAX_SIZE));
 
         final SendAgent sendQuotes = new SendAgent(pub, quote, quoteIntervalUs * 1000L);
         final SendAgent sendTrades = new SendAgent(pub, trade, tradeIntervalUs * 1000L);
