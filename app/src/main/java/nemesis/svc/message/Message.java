@@ -16,8 +16,10 @@ public interface Message
     public abstract java.nio.ByteBuffer byteBuffer();
 
     public abstract int type();
-    
-    public abstract void setTimestamp(long timestamp);
 
-    public abstract void setReceivedAt(long timestamp);
+    // setTimestamp is used only for testing purposes.
+    public abstract void setTimestamp(long ts);
+
+    // setReceivedAt is used only for testing purposes.
+    public abstract void setReceivedAt(long ts);
 }

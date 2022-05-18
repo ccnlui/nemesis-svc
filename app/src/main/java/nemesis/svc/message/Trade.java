@@ -49,13 +49,11 @@ public class Trade implements Message
         return buf.get(0);
     }
 
-    @Override
     public void setTimestamp(long timestamp)
     {
         buf.putLong(24, timestamp);
     }
 
-    @Override
     public void setReceivedAt(long timestamp)
     {
         buf.putLong(46, timestamp);

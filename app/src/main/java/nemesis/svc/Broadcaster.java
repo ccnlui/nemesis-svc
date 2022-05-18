@@ -84,6 +84,7 @@ public class Broadcaster implements Callable<Void>
                 final BablConfig config = PropertiesLoader.configure(Paths.get(configPath));
                 final BablStreamServer bablStreamServer = new BablStreamServer();
                 config.applicationConfig().application(bablStreamServer);  // this is needed to register broadcastSource
+                config.proxyConfig().mediaDriverDir(aeron.context().aeronDirectoryName());  // always reuse media driver
 
                 // construct the agents
                 final BablBroadcastAgent bablBroadcastAgent = new BablBroadcastAgent(sub, bablStreamServer);
