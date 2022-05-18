@@ -205,69 +205,69 @@ public class Quote implements Message
         // Type.
         pos += out.putStringWithoutLengthAscii(pos, "[{\"T\":\"q\"");
 
-        // Symbol.
-        pos += out.putStringWithoutLengthAscii(pos, ",\"S\":\"");
-        for (int i = 0; i < 11; i++)
-        {
-            byte b = buf.get(1+i);
-            if (MessageUtil.isAsciiPrintable(b))
-            {
-                out.putByte(pos++, b);
-            }
-        }
-        out.putByte(pos++, (byte)'\"');
+        // // Symbol.
+        // pos += out.putStringWithoutLengthAscii(pos, ",\"S\":\"");
+        // for (int i = 0; i < 11; i++)
+        // {
+        //     byte b = buf.get(1+i);
+        //     if (MessageUtil.isAsciiPrintable(b))
+        //     {
+        //         out.putByte(pos++, b);
+        //     }
+        // }
+        // out.putByte(pos++, (byte)'\"');
 
-        // AskExchange.
-        pos += out.putStringWithoutLengthAscii(pos, ",\"ax\":\"");
-        // TODO
-        // out.putByte(pos++, askExchange());
-        out.putByte(pos++, (byte)'\"');
+        // // AskExchange.
+        // pos += out.putStringWithoutLengthAscii(pos, ",\"ax\":\"");
+        // // TODO
+        // // out.putByte(pos++, askExchange());
+        // out.putByte(pos++, (byte)'\"');
 
-        // BidExchange.
-        pos += out.putStringWithoutLengthAscii(pos, ",\"bx\":\"");
-        // TODO
-        // out.putByte(pos++, bidExchange());
-        out.putByte(pos++, (byte)'\"');
+        // // BidExchange.
+        // pos += out.putStringWithoutLengthAscii(pos, ",\"bx\":\"");
+        // // TODO
+        // // out.putByte(pos++, bidExchange());
+        // out.putByte(pos++, (byte)'\"');
 
-        // Conditions.
-        pos += out.putStringWithoutLengthAscii(pos, ",\"c\":[");
-        for (int i = 0; i < 2; i++)
-        {
-            byte b = buf.get(14+i);
-            if (MessageUtil.isAsciiPrintable(b))
-            {
-                out.putByte(pos++, b);
-            }
-        }
-        out.putByte(pos++, (byte)']');
+        // // Conditions.
+        // pos += out.putStringWithoutLengthAscii(pos, ",\"c\":[");
+        // for (int i = 0; i < 2; i++)
+        // {
+        //     byte b = buf.get(14+i);
+        //     if (MessageUtil.isAsciiPrintable(b))
+        //     {
+        //         out.putByte(pos++, b);
+        //     }
+        // }
+        // out.putByte(pos++, (byte)']');
 
         // Timestamp nanos.
         pos += out.putStringWithoutLengthAscii(pos, ",\"tn\":");
         pos += out.putLongAscii(pos, timestamp());
 
-        // AskPrice.
-        pos += out.putStringWithoutLengthAscii(pos, ",\"ap\":");
-        // TODO
-        pos += out.putStringWithoutLengthAscii(pos, "0.0");
+        // // AskPrice.
+        // pos += out.putStringWithoutLengthAscii(pos, ",\"ap\":");
+        // // TODO
+        // pos += out.putStringWithoutLengthAscii(pos, "0.0");
 
-        // BidPrice.
-        pos += out.putStringWithoutLengthAscii(pos, ",\"bp\":");
-        // TODO
-        pos += out.putStringWithoutLengthAscii(pos, "0.0");
+        // // BidPrice.
+        // pos += out.putStringWithoutLengthAscii(pos, ",\"bp\":");
+        // // TODO
+        // pos += out.putStringWithoutLengthAscii(pos, "0.0");
 
-        // AskSize.
-        pos += out.putStringWithoutLengthAscii(pos, ",\"as\":");
-        pos += out.putIntAscii(pos, askSize());
+        // // AskSize.
+        // pos += out.putStringWithoutLengthAscii(pos, ",\"as\":");
+        // pos += out.putIntAscii(pos, askSize());
 
-        // BidSize.
-        pos += out.putStringWithoutLengthAscii(pos, ",\"bs\":");
-        pos += out.putIntAscii(pos, bidSize());
+        // // BidSize.
+        // pos += out.putStringWithoutLengthAscii(pos, ",\"bs\":");
+        // pos += out.putIntAscii(pos, bidSize());
 
-        // Tape.
-        pos += out.putStringWithoutLengthAscii(pos, ",\"z\":\"");
-        // TODO
-        // out.putByte(pos++, tape());
-        out.putByte(pos++, (byte)'\"');
+        // // Tape.
+        // pos += out.putStringWithoutLengthAscii(pos, ",\"z\":\"");
+        // // TODO
+        // // out.putByte(pos++, tape());
+        // out.putByte(pos++, (byte)'\"');
 
         pos += out.putStringWithoutLengthAscii(pos, "}]");
         return pos;
