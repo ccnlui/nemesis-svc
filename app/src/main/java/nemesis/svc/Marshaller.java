@@ -16,8 +16,12 @@ import io.aeron.Subscription;
 import io.aeron.driver.MediaDriver;
 import io.aeron.driver.ThreadingMode;
 import nemesis.svc.agent.MarshalAgent;
+import nemesis.svc.message.Message;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.ParameterException;
+import picocli.CommandLine.Spec;
+import picocli.CommandLine.Model.CommandSpec;
 
 @Command(
     name = "marshaller",
@@ -25,6 +29,8 @@ import picocli.CommandLine.Option;
     description = "marshall nemesis trades and quotes messages")
 public class Marshaller implements Callable<Void>
 {
+    @Spec CommandSpec spec;
+
     @Option(names = {"-h", "--help"}, usageHelp = true, description = "help message")
     boolean help;
 
@@ -38,6 +44,10 @@ public class Marshaller implements Callable<Void>
     @Option(names = "--pub-endpoint", defaultValue = "",
         description = "aeron udp transport endpoint to which messages are published in address:port format (default: \"${DEFAULT-VALUE}\")")
     String pubEndpoint;
+
+    @Option(names = "--format", defaultValue = "msgpack",
+        description = "message format: json or msgpack (default: \"${DEFAULT-VALUE}\")")
+    Message.Format format;
 
     private static final Logger LOG = LoggerFactory.getLogger(Marshaller.class);
 
@@ -60,7 +70,7 @@ public class Marshaller implements Callable<Void>
         final Publication pub = aeron.addPublication(outChannel, outStream);
 
         // construct the agents
-        final MarshalAgent marshalAgent = new MarshalAgent(sub, pub);
+        final MarshalAgent marshalAgent = new MarshalAgent(sub, pub, format);
         final AgentRunner agentRunner = new AgentRunner(
             idleStrategy,
             Throwable::printStackTrace,

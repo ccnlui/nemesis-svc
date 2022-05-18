@@ -173,6 +173,17 @@ public class Trade implements Message
         return buf.getLong(46);
     }
 
+    @Override
+    public int toMessageData(Format format, UnsafeBuffer out)
+    {
+        switch (format)
+        {
+            case MSGPACK -> toMessageMsgpack(out);
+            case JSON -> toMessageJson(out);
+        }
+        return -1;
+    }
+
     public int toMessageJson(UnsafeBuffer out)
     {
         int pos = 0;
@@ -182,7 +193,7 @@ public class Trade implements Message
         return pos;
     }
 
-    public int toMessageMsgPack(UnsafeBuffer out)
+    public int toMessageMsgpack(UnsafeBuffer out)
     {
         int pos = 0;
 

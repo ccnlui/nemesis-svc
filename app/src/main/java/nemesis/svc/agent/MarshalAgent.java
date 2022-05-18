@@ -31,6 +31,7 @@ public class MarshalAgent implements Agent
     private final UnsafeBuffer outBuf;
     private final Quote quote;
     private final Trade trade;
+    private final Message.Format format;
 
     private final NanoClock clock = new SystemNanoClock();
     private long nowNs = clock.nanoTime();
@@ -39,7 +40,8 @@ public class MarshalAgent implements Agent
 
     public MarshalAgent(
         final Subscription sub,
-        final Publication pub)
+        final Publication pub,
+        final Message.Format format)
     {
         this.sub = sub;
         this.pub = pub;
@@ -48,6 +50,7 @@ public class MarshalAgent implements Agent
         this.outBuf = new UnsafeBuffer(ByteBuffer.allocateDirect(Message.MAX_SIZE));
         this.quote = new Quote();
         this.trade = new Trade();
+        this.format = format;
     }
 
     private void onMessage(DirectBuffer buffer, int offset, int length, Header header)
@@ -60,14 +63,12 @@ public class MarshalAgent implements Agent
         {
         case Message.QUOTE:
             this.quote.fromByteBuffer(inBuf.byteBuffer());
-            // outBytes = this.quote.toMessageJson(outBuf);
-            outBytes = this.quote.toMessageMsgpack(outBuf);
+            outBytes = this.quote.toMessageData(format, outBuf);
             break;
 
         case Message.TRADE:
             this.trade.fromByteBuffer(inBuf.byteBuffer());
-            // outBytes = this.trade.toMessageJson(outBuf);
-            outBytes = this.trade.toMessageMsgPack(outBuf);
+            outBytes = this.quote.toMessageData(format, outBuf);
             break;
 
         default:

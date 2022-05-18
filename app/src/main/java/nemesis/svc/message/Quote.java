@@ -212,6 +212,17 @@ public class Quote implements Message
         buf.putLong(50, timestamp);
     }
 
+    @Override
+    public int toMessageData(Format format, UnsafeBuffer out)
+    {
+        switch (format)
+        {
+            case MSGPACK -> toMessageMsgpack(out);
+            case JSON -> toMessageJson(out);
+        }
+        return -1;
+    }
+
     public int toMessageJson(UnsafeBuffer out)
     {
         int pos = 0;

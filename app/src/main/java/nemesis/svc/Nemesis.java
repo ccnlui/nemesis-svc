@@ -25,6 +25,7 @@ public class Nemesis
         cmd.addSubcommand("connector", Connector.class);
         cmd.addSubcommand("marshaller", Marshaller.class);
         cmd.addSubcommand("broadcaster", Broadcaster.class);
+        cmd.setCaseInsensitiveEnumValuesAllowed(true);
         System.exit(cmd.execute(args));
     }
 }
