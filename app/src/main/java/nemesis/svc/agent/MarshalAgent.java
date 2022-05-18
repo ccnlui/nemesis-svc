@@ -68,7 +68,7 @@ public class MarshalAgent implements Agent
 
         case Message.TRADE:
             this.trade.fromByteBuffer(inBuf.byteBuffer());
-            outBytes = this.quote.toMessageData(format, outBuf);
+            outBytes = this.trade.toMessageData(format, outBuf);
             break;
 
         default:
