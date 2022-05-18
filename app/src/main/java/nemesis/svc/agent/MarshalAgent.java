@@ -60,7 +60,8 @@ public class MarshalAgent implements Agent
         {
         case Message.QUOTE:
             this.quote.fromByteBuffer(inBuf.byteBuffer());
-            outBytes = this.quote.toMessageJson(outBuf);
+            // outBytes = this.quote.toMessageJson(outBuf);
+            outBytes = this.quote.toMessageMsgpack(outBuf);
             break;
 
         case Message.TRADE:

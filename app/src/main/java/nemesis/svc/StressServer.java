@@ -71,8 +71,8 @@ public class StressServer implements Callable<Void>
         final Publication pub = aeron.addPublication(channel, stream);
 
         // construct the agents
-        Quote quote = new Quote(ByteBuffer.allocateDirect(Quote.MAX_SIZE));
-        quote.setFakeValues();
+        Quote quote = new Quote();
+        quote.setFakeValues(ByteBuffer.allocateDirect(Quote.MAX_SIZE));
         Trade trade = new Trade(ByteBuffer.allocateDirect(Trade.MAX_SIZE));
 
         final SendAgent sendQuotes = new SendAgent(pub, quote, quoteIntervalUs * 1000L);

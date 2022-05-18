@@ -1,8 +1,11 @@
 package nemesis.svc.message;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 
+import org.agrona.concurrent.EpochNanoClock;
+import org.agrona.concurrent.SystemEpochNanoClock;
 import org.agrona.concurrent.UnsafeBuffer;
 
 // class Quote
@@ -30,15 +33,26 @@ public class Quote implements Message
     {
     }
 
-    public Quote(ByteBuffer buf)
+    // setFakeValues initialize fake values for testing purposes.
+    // it generates garbage
+    public void setFakeValues(ByteBuffer buf)
     {
-        this.buf = buf;
-    }
-
-    public void setFakeValues()
-    {
+        fromByteBuffer(buf);
         setType();
-        setSymbol("APCA", Charset.forName("ISO-8859-1"));
+        setSymbol("FAKEPACA", Charset.forName("ISO-8859-1"));
+        setAskExchange((byte) 'A');
+        setBidExchange((byte) 'B');
+        setConditions(new byte[]{(byte) 'R'});
+        setAskPrice(678.90);
+        setBidPrice(123.45);
+        setAskSize(11);
+        setBidSize(22);
+        setNbbo((byte) 1);
+        setTape((byte) 'A');
+        SystemEpochNanoClock clock = new SystemEpochNanoClock();
+        long epochNs = clock.nanoTime();
+        setTimestamp(epochNs - 1_000_000L);
+        setReceivedAt(epochNs);
     }
 
     @Override
@@ -271,5 +285,131 @@ public class Quote implements Message
 
         pos += out.putStringWithoutLengthAscii(pos, "}]");
         return pos;
+    }
+
+    public int toMessageMsgpack(UnsafeBuffer out)
+    {
+        int pos = 0;
+
+        // array header
+        out.putByte(pos++, (byte) 0x91);
+
+        // map header (12 fields)
+        out.putByte(pos++, (byte) 0x8c);
+
+        // Type.
+        out.putByte(pos++, (byte) 0xa1);
+        out.putByte(pos++, (byte) 'T');
+        out.putByte(pos++, (byte) 0xa1);
+        out.putByte(pos++, (byte) 'q');
+
+        // Symbol.
+        out.putByte(pos++, (byte) 0xa1);
+        out.putByte(pos++, (byte) 'S');
+        int sl = symbolLength();
+        out.putByte(pos++, (byte) (0xa0 + sl));
+        out.putBytes(pos, this.buf, 1, sl);
+        pos += sl;
+
+        // BidExchange.
+        out.putByte(pos++, (byte) 0xa2);
+        pos += out.putStringWithoutLengthAscii(pos, "bx");
+        out.putByte(pos++, (byte) 0xa1);
+        out.putByte(pos++, (byte) bidExchange());
+
+        // BidPrice.
+        out.putByte(pos++, (byte) 0xa2);
+        pos += out.putStringWithoutLengthAscii(pos, "bp");
+        out.putByte(pos++, (byte) 0xcb);
+        out.putDouble(pos, bidPrice(), ByteOrder.BIG_ENDIAN);
+        pos += Double.BYTES;
+
+        // BidSize.
+        out.putByte(pos++, (byte) 0xa2);
+        pos += out.putStringWithoutLengthAscii(pos, "bs");
+        out.putByte(pos++, (byte) 0xce);
+        out.putInt(pos, bidSize(), ByteOrder.BIG_ENDIAN);
+        pos += Integer.BYTES;
+
+        // AskExchange.
+        out.putByte(pos++, (byte) 0xa2);
+        pos += out.putStringWithoutLengthAscii(pos, "ax");
+        out.putByte(pos++, (byte) 0xa1);
+        out.putByte(pos++, (byte) askExchange());
+
+        // AskPrice.
+        out.putByte(pos++, (byte) 0xa2);
+        pos += out.putStringWithoutLengthAscii(pos, "ap");
+        out.putByte(pos++, (byte) 0xcb);
+        out.putDouble(pos, askPrice(), ByteOrder.BIG_ENDIAN);
+        pos += Double.BYTES;
+
+        // AskSize.
+        out.putByte(pos++, (byte) 0xa2);
+        pos += out.putStringWithoutLengthAscii(pos, "as");
+        out.putByte(pos++, (byte) 0xce);
+        out.putInt(pos, askSize(), ByteOrder.BIG_ENDIAN);
+        pos += Integer.BYTES;
+
+        // Conditions.
+        out.putByte(pos++, (byte) 0xa1);
+        out.putByte(pos++, (byte) 'c');
+        int cl = conditionsLength();
+        out.putByte(pos++, (byte) (0x90 + cl));
+        for (int i = 0; i < cl; i++)
+        {
+            out.putByte(pos++, (byte) 0xa1);
+            out.putByte(pos++, this.buf.get(14+i));
+        }
+
+        // Tape.
+        out.putByte(pos++, (byte) 0xa1);
+        out.putByte(pos++, (byte) 'z');
+        out.putByte(pos++, (byte) 0xa1);
+        out.putByte(pos++, tape());
+
+        // Timestamp.
+        out.putByte(pos++, (byte) 0xa1);
+        out.putByte(pos++, (byte) 't');
+        out.putByte(pos++, (byte) 0xd7);
+        out.putByte(pos++, (byte) 0xff);
+        long ts = ((timestamp() % 1_000_000_000L) << 34) | timestamp() / 1_000_000_000L;
+        out.putLong(pos, ts, ByteOrder.BIG_ENDIAN);
+        pos += Long.BYTES;
+
+        // ReceivedAt.
+        out.putByte(pos++, (byte) 0xa1);
+        out.putByte(pos++, (byte) 'r');
+        out.putByte(pos++, (byte) 0xd7);
+        out.putByte(pos++, (byte) 0xff);
+        long rcv = ((receivedAt() % 1_000_000_000L) << 34) | receivedAt() / 1_000_000_000L;
+        out.putLong(pos, rcv, ByteOrder.BIG_ENDIAN);
+        pos += Long.BYTES;
+
+        return pos;
+    }
+
+    private int symbolLength()
+    {
+        int len;
+        for (len = 0; len < 11; len++)
+        {
+            byte b = buf.get(1+len);
+            if (!MessageUtil.isAsciiPrintable(b))
+                break;
+        }
+        return len;
+    }
+
+    private int conditionsLength()
+    {
+        int len;
+        for (len = 0; len < 2; len++)
+        {
+            byte b = buf.get(14+len);
+            if (!MessageUtil.isAsciiPrintable(b))
+                break;
+        }
+        return len;
     }
 }
