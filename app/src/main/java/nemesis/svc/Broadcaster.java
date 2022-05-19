@@ -80,7 +80,7 @@ public class Broadcaster implements Callable<Void>
                 // construct babl server
                 final String configPath = System.getProperty("user.dir") + "/build/resources/main/babl-default.properties";
                 // final String configPath = "/home/calvin/source/java/nemesis-svc/babl-performance.properties";
-                LOG.info("configPath: {}", configPath);
+                LOG.info("babl config path: {}", configPath);
                 final BablConfig config = PropertiesLoader.configure(Paths.get(configPath));
                 final BablStreamServer bablStreamServer = new BablStreamServer();
                 config.applicationConfig().application(bablStreamServer);  // this is needed to register broadcastSource
