@@ -64,13 +64,13 @@ public class Broadcaster implements Callable<Void>
         final ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
 
         final MediaDriver mediaDriver = launchEmbeddedMediaDriverIfConfigured();
-        String aeronDirName = mediaDriver == null ? null : mediaDriver.aeronDirectoryName();
-        final Aeron aeron = connectAeron(aeronDirName);
-        
+        String defaultAeronDirName = mediaDriver == null ? null : mediaDriver.aeronDirectoryName();
+        final Aeron aeron = connectAeron(defaultAeronDirName);
+
         // construct publication and subscription
         final Subscription sub = aeron.addSubscription(inChannel, inStream);
 
-        
+
         AgentRunner agentRunner = null;
         SessionContainers containers = null;
         switch (websocketLib)
@@ -95,7 +95,7 @@ public class Broadcaster implements Callable<Void>
                 containers.start();
                 bablStreamServer.createBroadcastTopic();
             }
-                
+
             case "java-websocket" ->
             {
                 // construct java-websocket server
@@ -149,12 +149,12 @@ public class Broadcaster implements Callable<Void>
         return null;
     }
 
-    private Aeron connectAeron(String aeronDirName)
+    private Aeron connectAeron(String defaultAeronDirName)
     {
         Aeron.Context aeronCtx = new Aeron.Context()
             .idleStrategy(new NoOpIdleStrategy());
-        if (aeronDirName != null)
-            aeronCtx = aeronCtx.aeronDirectoryName(aeronDirName);
+        if (defaultAeronDirName != null)
+            aeronCtx = aeronCtx.aeronDirectoryName(defaultAeronDirName);
         else if (aeronDir != null)
             aeronCtx = aeronCtx.aeronDirectoryName(aeronDir);
         LOG.info(aeronCtx.toString());
@@ -179,5 +179,5 @@ public class Broadcaster implements Callable<Void>
     {
         if (closeable != null)
             closeable.close();
-    }    
+    }
 }

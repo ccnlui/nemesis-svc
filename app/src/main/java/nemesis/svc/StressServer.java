@@ -64,8 +64,8 @@ public class StressServer implements Callable<Void>
         final ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
 
         final MediaDriver mediaDriver = launchEmbeddedMediaDriverIfConfigured();
-        String aeronDirName = mediaDriver == null ? null : mediaDriver.aeronDirectoryName();
-        final Aeron aeron = connectAeron(aeronDirName);
+        String defaultAeronDirName = mediaDriver == null ? null : mediaDriver.aeronDirectoryName();
+        final Aeron aeron = connectAeron(defaultAeronDirName);
 
         // construct the publication
         final Publication pub = aeron.addPublication(channel, stream);
@@ -120,12 +120,12 @@ public class StressServer implements Callable<Void>
         return null;
     }
 
-    private Aeron connectAeron(String aeronDirName)
+    private Aeron connectAeron(String defaultAeronDirName)
     {
         Aeron.Context aeronCtx = new Aeron.Context()
             .idleStrategy(new NoOpIdleStrategy());
-        if (aeronDirName != null)
-            aeronCtx = aeronCtx.aeronDirectoryName(aeronDirName);
+        if (defaultAeronDirName != null)
+            aeronCtx = aeronCtx.aeronDirectoryName(defaultAeronDirName);
         else if (aeronDir != null)
             aeronCtx = aeronCtx.aeronDirectoryName(aeronDir);
         LOG.info(aeronCtx.toString());
