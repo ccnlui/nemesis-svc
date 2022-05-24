@@ -2,6 +2,8 @@ package nemesis.svc.agent;
 
 import java.nio.ByteBuffer;
 
+import static java.lang.Math.max;
+
 import org.HdrHistogram.Histogram;
 import org.agrona.DirectBuffer;
 import org.agrona.concurrent.Agent;
@@ -65,7 +67,7 @@ public class ReceiveAgent implements Agent
             this.quote.fromByteBuffer(unsafeBuffer.byteBuffer());
             if (this.onScheduleMeasure())
             {
-                histogram.recordValue(epochClock.nanoTime() - quote.receivedAt());
+                histogram.recordValue(max(1, epochClock.nanoTime() - quote.receivedAt()));
             }
             // LOG.info("quote: {}", quote.receivedAt());
             break;
@@ -74,7 +76,7 @@ public class ReceiveAgent implements Agent
             this.trade.fromByteBuffer(unsafeBuffer.byteBuffer());
             if (this.onScheduleMeasure())
             {
-                histogram.recordValue(epochClock.nanoTime() - trade.receivedAt());
+                histogram.recordValue(max(1, epochClock.nanoTime() - trade.receivedAt()));
             }
             // LOG.info("trade: {}", trade.receivedAt());
             break;
