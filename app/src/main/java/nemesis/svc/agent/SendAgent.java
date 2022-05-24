@@ -53,7 +53,10 @@ public class SendAgent implements Agent
                 if (!AgentUtil.retryPublicationResult(pos))
                     break;
             }
-            sentMsg += 1;
+            if (pos > 0)
+            {
+                sentMsg += 1;
+            }
         }
         if (onScheduleReport())
         {
