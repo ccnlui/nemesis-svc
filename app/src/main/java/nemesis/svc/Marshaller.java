@@ -41,6 +41,10 @@ public class Marshaller implements Callable<Void>
     @Option(names = "--aeron-dir", description = "override directory name for embedded aeron media driver")
     String aeronDir;
 
+    @Option(names = "--sub-endpoint", defaultValue = "${SUB_ENDPOINT:-127.0.0.1:2000}",
+        description = "aeron udp transport endpoint from which messages are subscribed in address:port format (default: \"${DEFAULT-VALUE}\")")
+    String subEndpoint;
+
     @Option(names = "--pub-endpoint", defaultValue = "",
         description = "aeron udp transport endpoint to which messages are published in address:port format (default: \"${DEFAULT-VALUE}\")")
     String pubEndpoint;
@@ -54,7 +58,7 @@ public class Marshaller implements Callable<Void>
     @Override
     public Void call() throws Exception
     {
-        final String inChannel = "aeron:ipc";
+        final String inChannel = aeronIpcOrUdpChannel(subEndpoint);
         final int inStream = 11;
         final String outChannel = aeronIpcOrUdpChannel(pubEndpoint);
         final int outStream = 12;

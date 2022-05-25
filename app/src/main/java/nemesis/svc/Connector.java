@@ -38,6 +38,10 @@ public class Connector implements Callable<Void>
         description = "aeron udp transport endpoint from which messages are subscribed in address:port format (default: \"${DEFAULT-VALUE}\")")
     String subEndpoint;
 
+    @Option(names = "--pub-endpoint", defaultValue = "",
+        description = "aeron udp transport endpoint to which messages are published in address:port format (default: \"${DEFAULT-VALUE}\")")
+    String pubEndpoint;
+
     @Option(names = "--aeron-dir", description = "override directory name for embedded aeron media driver")
     String aeronDir;
 
@@ -46,8 +50,8 @@ public class Connector implements Callable<Void>
     @Override
     public Void call() throws Exception
     {
-        final String inChannel = "aeron:udp?endpoint=" + subEndpoint + "|mtu=1408";
-        final String outChannel = "aeron:ipc";
+        final String inChannel = aeronIpcOrUdpChannel(subEndpoint);
+        final String outChannel = aeronIpcOrUdpChannel(pubEndpoint);
         final int inStream = 10;
         final int outStream = 11;
         final IdleStrategy idleStrategy = new BusySpinIdleStrategy();
@@ -128,5 +132,17 @@ public class Connector implements Callable<Void>
     {
         if (closeable != null)
             closeable.close();
+    }
+
+    private String aeronIpcOrUdpChannel(String endpoint)
+    {
+        if (endpoint == null || endpoint.isEmpty())
+        {
+            return "aeron:ipc";
+        }
+        else
+        {
+            return "aeron:udp?endpoint=" + endpoint + "|mtu=1408";
+        }
     }
 }
