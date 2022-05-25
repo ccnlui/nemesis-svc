@@ -1,16 +1,16 @@
 package nemesis.svc.agent;
 
-import java.nio.ByteBuffer;
-
 import static java.lang.Math.max;
+
+import java.nio.ByteBuffer;
 
 import org.HdrHistogram.Histogram;
 import org.agrona.DirectBuffer;
 import org.agrona.concurrent.Agent;
 import org.agrona.concurrent.EpochNanoClock;
 import org.agrona.concurrent.NanoClock;
+import org.agrona.concurrent.OffsetEpochNanoClock;
 import org.agrona.concurrent.ShutdownSignalBarrier;
-import org.agrona.concurrent.SystemEpochNanoClock;
 import org.agrona.concurrent.SystemNanoClock;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.slf4j.Logger;
@@ -36,7 +36,7 @@ public class ReceiveAgent implements Agent
     private final ShutdownSignalBarrier barrier;
 
     private final NanoClock clock = new SystemNanoClock();
-    private final EpochNanoClock epochClock = new SystemEpochNanoClock();
+    private final EpochNanoClock epochClock = new OffsetEpochNanoClock();
     private long nowNs = clock.nanoTime();
     private final long startTimeNs = nowNs + 10_000_000_000L;
     private final long endTimeNs = nowNs + 30_000_000_000L;

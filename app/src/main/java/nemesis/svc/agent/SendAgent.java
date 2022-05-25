@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit;
 import org.agrona.concurrent.Agent;
 import org.agrona.concurrent.EpochNanoClock;
 import org.agrona.concurrent.NanoClock;
-import org.agrona.concurrent.SystemEpochNanoClock;
+import org.agrona.concurrent.OffsetEpochNanoClock;
 import org.agrona.concurrent.SystemNanoClock;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.slf4j.Logger;
@@ -22,7 +22,7 @@ public class SendAgent implements Agent
     private final UnsafeBuffer unsafeBuffer;
 
     private final NanoClock clock = new SystemNanoClock();
-    private final EpochNanoClock epochClock = new SystemEpochNanoClock();
+    private final EpochNanoClock epochClock = new OffsetEpochNanoClock();
     private final long intervalNs;
     private final long startTimeNs = clock.nanoTime();
     private long nowNs = startTimeNs;
