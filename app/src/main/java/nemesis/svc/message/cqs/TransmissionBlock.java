@@ -76,7 +76,7 @@ public class TransmissionBlock extends SelfDescribingMarshallable
         buf.putInt(14, now.getNano());
     }
 
-    public void parseHeader()
+    public void displayHeader()
     {
         System.out.printf("(%s) size: %d seq num: %d msgInBlk: %d timestamp: %d time: %s\n",
             buf.order().toString(),

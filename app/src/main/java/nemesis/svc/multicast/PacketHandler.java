@@ -1,4 +1,4 @@
-package nemesis.svc.nanoservice;
+package nemesis.svc.multicast;
 
 import java.nio.ByteBuffer;
 
