@@ -28,23 +28,17 @@ import nemesis.svc.message.cqs.TransmissionBlock;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-@Command
-(
+@Command(
     name = "publisher",
     description = "listen and publish marketdata multicast data",
-    usageHelpAutoWidth = true
-)
+    usageHelpAutoWidth = true)
 public class Publisher implements Callable<Void>
 {
     @Option(names = {"-h", "--help"}, usageHelp = true, description = "help message")
     boolean help;
 
-    @Option
-    (
-        names = {"-i", "--interface"},
-        defaultValue = "${NEMESIS_NETWORK_INTERFACE:-eth0}",
-        description = "network interface"
-    )
+    @Option(names = {"-i", "--interface"}, defaultValue = "${NEMESIS_NETWORK_INTERFACE:-eth0}",
+        description = "network interface")
     String networkInterface;
 
     @Option(names = {"-b", "--bench"}, description = "measure inbound delay for 20 sec")
@@ -53,7 +47,7 @@ public class Publisher implements Callable<Void>
     private static final Logger LOG = LoggerFactory.getLogger(Publisher.class);
 
     final long WARMUP_TIME_MSEC = 10_000;
-    final long RUN_TIME_MSEC    = 20_000;
+    final long RUN_TIME_MSEC = 20_000;
 
     @Override
     public Void call() throws Exception

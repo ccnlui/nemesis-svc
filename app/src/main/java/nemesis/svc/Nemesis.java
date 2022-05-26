@@ -7,8 +7,7 @@ import picocli.CommandLine.Command;
     name = "nemesis",
     mixinStandardHelpOptions = true,
     usageHelpAutoWidth = true,
-    description = "nemesis nanoservices"
-)
+    description = "nemesis nanoservices")
 public class Nemesis
 {
     public static void main( String[] args )

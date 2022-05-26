@@ -1,5 +1,10 @@
 package nemesis.svc;
 
+import static nemesis.svc.Util.aeronIpcOrUdpChannel;
+import static nemesis.svc.Util.closeIfNotNull;
+import static nemesis.svc.Util.connectAeron;
+import static nemesis.svc.Util.launchEmbeddedMediaDriverIfConfigured;
+
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
@@ -9,9 +14,6 @@ import com.aitusoftware.babl.websocket.BablServer;
 import com.aitusoftware.babl.websocket.SessionContainers;
 
 import org.agrona.concurrent.AgentRunner;
-import org.agrona.concurrent.BusySpinIdleStrategy;
-import org.agrona.concurrent.IdleStrategy;
-import org.agrona.concurrent.NoOpIdleStrategy;
 import org.agrona.concurrent.ShutdownSignalBarrier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import io.aeron.Aeron;
 import io.aeron.Subscription;
 import io.aeron.driver.MediaDriver;
-import io.aeron.driver.ThreadingMode;
 import nemesis.svc.agent.BablBroadcastAgent;
 import nemesis.svc.agent.BroadcastAgent;
 import picocli.CommandLine.Command;
@@ -41,143 +42,94 @@ public class Broadcaster implements Callable<Void>
     @Option(names = "--aeron-dir", description = "override directory name for embedded aeron media driver")
     String aeronDir;
 
-    @Option(names = "--sub-endpoint", defaultValue = "",
-        description = "aeron udp transport endpoint from which messages are subscribed in address:port format (default: \"${DEFAULT-VALUE}\")")
+    @Option(names = "--sub-endpoint", description = "aeron udp transport endpoint from which messages are subscribed <address:port>")
     String subEndpoint;
 
-    @Option(names = "--port", defaultValue = "${PORT:-8080}",
-        description = "websocket server port (default: ${DEFAULT-VALUE})")
-    int port;
-
-    @Option(names = "--websocket-lib", defaultValue = "${WEBSOCKET_LIB:-babl}",
-        description = "websocket server library (default: ${DEFAULT-VALUE})")
+    @Option(names = "--websocket-lib", description = "websocket server library")
     String websocketLib;
+
+    @Option(names = "--port", description = "websocket server port")
+    int websocketPort;
 
     private static final Logger LOG = LoggerFactory.getLogger(Broadcaster.class);
 
     @Override
     public Void call() throws Exception
     {
-        final String inChannel = aeronIpcOrUdpChannel(subEndpoint);
-        final int inStream = 12;
-        final IdleStrategy idleStrategy = new BusySpinIdleStrategy();
-        final ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
+        mergeConfig();
 
         final MediaDriver mediaDriver = launchEmbeddedMediaDriverIfConfigured();
-        String defaultAeronDirName = mediaDriver == null ? null : mediaDriver.aeronDirectoryName();
-        final Aeron aeron = connectAeron(defaultAeronDirName);
+        final Aeron aeron = connectAeron(mediaDriver);
 
-        // construct publication and subscription
+        final String inChannel = aeronIpcOrUdpChannel(Config.subEndpoint);
+        final int inStream = Config.websocketDataStream;
         final Subscription sub = aeron.addSubscription(inChannel, inStream);
+        LOG.info("in: {}:{}", inChannel, inStream);
 
+        final ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
 
         AgentRunner agentRunner = null;
         SessionContainers containers = null;
-        switch (websocketLib)
+        switch (Config.websocketLib)
         {
             case "babl" ->
             {
-                // construct babl server
-                final String configPath = System.getProperty("user.dir") + "/build/resources/main/babl-default.properties";
-                // final String configPath = "/home/calvin/source/java/nemesis-svc/babl-performance.properties";
-                LOG.info("babl config path: {}", configPath);
-                final BablConfig config = PropertiesLoader.configure(Paths.get(configPath));
+                LOG.info("babl config path: {}", Config.bablConfigPath);
+                final BablConfig config = PropertiesLoader.configure(Paths.get(Config.bablConfigPath));
                 final BablStreamServer bablStreamServer = new BablStreamServer();
                 config.applicationConfig().application(bablStreamServer);  // this is needed to register broadcastSource
                 config.proxyConfig().mediaDriverDir(aeron.context().aeronDirectoryName());  // always reuse media driver
 
-                // construct the agents
                 final BablBroadcastAgent bablBroadcastAgent = new BablBroadcastAgent(sub, bablStreamServer);
                 config.applicationConfig().additionalWork(bablBroadcastAgent);
 
-                LOG.info("babl broadcaster: in: {}:{}", inChannel, inStream);
                 containers = BablServer.launch(config);
                 containers.start();
                 bablStreamServer.createBroadcastTopic();
             }
-
             case "java-websocket" ->
             {
-                // construct java-websocket server
-                final StreamServer streamServer = new StreamServer(port);
-
-                // construct the agents
+                final StreamServer streamServer = new StreamServer(Config.websocketPort);
                 final BroadcastAgent broadcastAgent = new BroadcastAgent(sub, streamServer);
                 agentRunner = new AgentRunner(
-                    idleStrategy,
+                    Config.idleStrategy,
                     Throwable::printStackTrace,
                     null,
                     broadcastAgent
                 );
-
-                LOG.info("java-websocket broadcaster: in channel:stream: {}:{}", inChannel, inStream);
                 streamServer.start();
                 AgentRunner.startOnThread(agentRunner);
             }
         }
-
-        // wait for the shutdown signal
         barrier.await();
-
-        // close the resources
         closeIfNotNull(agentRunner);
         closeIfNotNull(containers);
         closeIfNotNull(aeron);
         closeIfNotNull(mediaDriver);
-
         return null;
     }
 
-    private MediaDriver launchEmbeddedMediaDriverIfConfigured()
+    private void mergeConfig()
     {
-        if (embeddedMediaDriver)
+        if (this.embeddedMediaDriver)
         {
-            MediaDriver.Context mediaDriverCtx = new MediaDriver.Context()
-                .dirDeleteOnStart(true)
-                .threadingMode(ThreadingMode.DEDICATED)
-                .conductorIdleStrategy(new BusySpinIdleStrategy())
-                .senderIdleStrategy(new NoOpIdleStrategy())
-                .receiverIdleStrategy(new NoOpIdleStrategy())
-                .dirDeleteOnShutdown(true);
-            if (aeronDir != null)
-                mediaDriverCtx = mediaDriverCtx.aeronDirectoryName(aeronDir);
-            MediaDriver md = MediaDriver.launchEmbedded(mediaDriverCtx);
-
-            LOG.info(mediaDriverCtx.toString());
-            return md;
+            Config.embeddedMediaDriver = this.embeddedMediaDriver;
         }
-        return null;
-    }
-
-    private Aeron connectAeron(String defaultAeronDirName)
-    {
-        Aeron.Context aeronCtx = new Aeron.Context()
-            .idleStrategy(new NoOpIdleStrategy());
-        if (defaultAeronDirName != null)
-            aeronCtx = aeronCtx.aeronDirectoryName(defaultAeronDirName);
-        else if (aeronDir != null)
-            aeronCtx = aeronCtx.aeronDirectoryName(aeronDir);
-        LOG.info(aeronCtx.toString());
-
-        final Aeron aeron = Aeron.connect(aeronCtx);
-        return aeron;
-    }
-
-    private String aeronIpcOrUdpChannel(String endpoint)
-    {
-        if (endpoint == null || endpoint.isEmpty())
+        if (this.aeronDir != null && !this.aeronDir.isEmpty())
         {
-            return "aeron:ipc";
+            Config.aeronDir = this.aeronDir;
         }
-        else
+        if (this.subEndpoint != null && !this.subEndpoint.isEmpty())
         {
-            return "aeron:udp?endpoint=" + endpoint + "|mtu=1408";
+            Config.subEndpoint = this.subEndpoint;
         }
-    }
-
-    private void closeIfNotNull(final AutoCloseable closeable) throws Exception
-    {
-        if (closeable != null)
-            closeable.close();
+        if (this.websocketPort != 0)
+        {
+            Config.websocketPort = this.websocketPort;
+        }
+        if (this.websocketLib != null && !this.websocketLib.isEmpty())
+        {
+            Config.websocketLib = this.websocketLib;
+        }
     }
 }

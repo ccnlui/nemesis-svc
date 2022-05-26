@@ -1,11 +1,13 @@
 package nemesis.svc;
 
+import static nemesis.svc.Util.aeronIpcOrUdpChannel;
+import static nemesis.svc.Util.closeIfNotNull;
+import static nemesis.svc.Util.connectAeron;
+import static nemesis.svc.Util.launchEmbeddedMediaDriverIfConfigured;
+
 import java.util.concurrent.Callable;
 
 import org.agrona.concurrent.AgentRunner;
-import org.agrona.concurrent.BusySpinIdleStrategy;
-import org.agrona.concurrent.IdleStrategy;
-import org.agrona.concurrent.NoOpIdleStrategy;
 import org.agrona.concurrent.ShutdownSignalBarrier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,14 +16,12 @@ import io.aeron.Aeron;
 import io.aeron.Publication;
 import io.aeron.Subscription;
 import io.aeron.driver.MediaDriver;
-import io.aeron.driver.ThreadingMode;
 import nemesis.svc.agent.MarshalAgent;
 import nemesis.svc.message.Message;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
-import picocli.CommandLine.ParameterException;
-import picocli.CommandLine.Spec;
 import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Spec;
 
 @Command(
     name = "marshaller",
@@ -41,16 +41,13 @@ public class Marshaller implements Callable<Void>
     @Option(names = "--aeron-dir", description = "override directory name for embedded aeron media driver")
     String aeronDir;
 
-    @Option(names = "--sub-endpoint", defaultValue = "${SUB_ENDPOINT:-127.0.0.1:2000}",
-        description = "aeron udp transport endpoint from which messages are subscribed in address:port format (default: \"${DEFAULT-VALUE}\")")
-    String subEndpoint;
-
-    @Option(names = "--pub-endpoint", defaultValue = "",
-        description = "aeron udp transport endpoint to which messages are published in address:port format (default: \"${DEFAULT-VALUE}\")")
+    @Option(names = "--pub-endpoint", description = "aeron udp transport endpoint to which messages are published <address:port>")
     String pubEndpoint;
 
-    @Option(names = "--format", defaultValue = "msgpack",
-        description = "message format: json or msgpack (default: \"${DEFAULT-VALUE}\")")
+    @Option(names = "--sub-endpoint", description = "aeron udp transport endpoint from which messages are subscribed <address:port>")
+    String subEndpoint;
+
+    @Option(names = "--format", description = "message format: json or msgpack")
     Message.Format format;
 
     private static final Logger LOG = LoggerFactory.getLogger(Marshaller.class);
@@ -58,95 +55,57 @@ public class Marshaller implements Callable<Void>
     @Override
     public Void call() throws Exception
     {
-        final String inChannel = aeronIpcOrUdpChannel(subEndpoint);
-        final int inStream = 11;
-        final String outChannel = aeronIpcOrUdpChannel(pubEndpoint);
-        final int outStream = 12;
-        final IdleStrategy idleStrategy = new BusySpinIdleStrategy();
-        final ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
+        mergeConfig();
 
         final MediaDriver mediaDriver = launchEmbeddedMediaDriverIfConfigured();
-        String defaultAeronDirName = mediaDriver == null ? null : mediaDriver.aeronDirectoryName();
-        final Aeron aeron = connectAeron(defaultAeronDirName);
+        final Aeron aeron = connectAeron(mediaDriver);
 
-        // construct publication and subscription
-        final Subscription sub = aeron.addSubscription(inChannel, inStream);
+        final String inChannel = aeronIpcOrUdpChannel(Config.subEndpoint);
+        final String outChannel = aeronIpcOrUdpChannel(Config.pubEndpoint);
+        final int inStream = Config.pipedDataStream;
+        final int outStream = Config.websocketDataStream;
         final Publication pub = aeron.addPublication(outChannel, outStream);
+        final Subscription sub = aeron.addSubscription(inChannel, inStream);
+        LOG.info("in: {}:{}", inChannel, inStream);
+        LOG.info("out: {}:{}", outChannel, outStream);
 
-        // construct the agents
-        final MarshalAgent marshalAgent = new MarshalAgent(sub, pub, format);
+        final ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
+        final MarshalAgent marshalAgent = new MarshalAgent(sub, pub, Config.messageFormat);
         final AgentRunner agentRunner = new AgentRunner(
-            idleStrategy,
+            Config.idleStrategy,
             Throwable::printStackTrace,
             null,
             marshalAgent
         );
-
-        LOG.info("marshaller: in: {}:{}", inChannel, inStream);
-        LOG.info("marshaller: out: {}:{}", outChannel, outStream);
         AgentRunner.startOnThread(agentRunner);
-
-        // wait for the shutdown signal
         barrier.await();
-
-        // close the resources
         closeIfNotNull(agentRunner);
         closeIfNotNull(aeron);
         closeIfNotNull(mediaDriver);
-
         return null;
     }
 
-    private MediaDriver launchEmbeddedMediaDriverIfConfigured()
+    private void mergeConfig()
     {
-        if (embeddedMediaDriver)
+        if (this.embeddedMediaDriver)
         {
-            MediaDriver.Context mediaDriverCtx = new MediaDriver.Context()
-                .dirDeleteOnStart(true)
-                .threadingMode(ThreadingMode.DEDICATED)
-                .conductorIdleStrategy(new BusySpinIdleStrategy())
-                .senderIdleStrategy(new NoOpIdleStrategy())
-                .receiverIdleStrategy(new NoOpIdleStrategy())
-                .dirDeleteOnShutdown(true);
-            if (aeronDir != null)
-                mediaDriverCtx = mediaDriverCtx.aeronDirectoryName(aeronDir);
-            MediaDriver md = MediaDriver.launchEmbedded(mediaDriverCtx);
-
-            LOG.info(mediaDriverCtx.toString());
-            return md;
+            Config.embeddedMediaDriver = this.embeddedMediaDriver;
         }
-        return null;
-    }
-
-    private Aeron connectAeron(String defaultAeronDirName)
-    {
-        Aeron.Context aeronCtx = new Aeron.Context()
-            .idleStrategy(new NoOpIdleStrategy());
-        if (defaultAeronDirName != null)
-            aeronCtx = aeronCtx.aeronDirectoryName(defaultAeronDirName);
-        else if (aeronDir != null)
-            aeronCtx = aeronCtx.aeronDirectoryName(aeronDir);
-        LOG.info(aeronCtx.toString());
-
-        final Aeron aeron = Aeron.connect(aeronCtx);
-        return aeron;
-    }
-
-    private String aeronIpcOrUdpChannel(String endpoint)
-    {
-        if (endpoint == null || endpoint.isEmpty())
+        if (this.aeronDir != null && !this.aeronDir.isEmpty())
         {
-            return "aeron:ipc";
+            Config.aeronDir = this.aeronDir;
         }
-        else
+        if (this.pubEndpoint != null && !this.pubEndpoint.isEmpty())
         {
-            return "aeron:udp?endpoint=" + endpoint + "|mtu=1408";
+            Config.pubEndpoint = this.pubEndpoint;
         }
-    }
-
-    private void closeIfNotNull(final AutoCloseable closeable) throws Exception
-    {
-        if (closeable != null)
-            closeable.close();
+        if (this.subEndpoint != null && !this.subEndpoint.isEmpty())
+        {
+            Config.subEndpoint = this.subEndpoint;
+        }
+        if (this.format != null)
+        {
+            Config.messageFormat = this.format;
+        }
     }
 }

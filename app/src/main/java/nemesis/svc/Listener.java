@@ -27,18 +27,14 @@ import picocli.CommandLine.Option;
 @Command(
     name = "listner",
     description = "subscribe and listen to marketdata multicast groups",
-    usageHelpAutoWidth = true
-)
-public class Listener implements Callable<Void> {
-
+    usageHelpAutoWidth = true)
+public class Listener implements Callable<Void>
+{
     @Option(names = {"-h", "--help"}, usageHelp = true, description = "help message")
     boolean help;
 
-    @Option(
-        names = {"-i", "--interface"},
-        defaultValue = "${NEMESIS_NETWORK_INTERFACE:-eth0}",
-        description = "network interface"
-    )
+    @Option(names = {"-i", "--interface"}, defaultValue = "${NEMESIS_NETWORK_INTERFACE:-eth0}",
+        description = "network interface")
     String networkInterface;
 
     @Option(names = {"-b", "--bench"}, description = "measure inbound delay for 20 sec")
@@ -55,17 +51,15 @@ public class Listener implements Callable<Void> {
     // private final char line = 'A';
     // private final String addr = "224.0.90.0";
     // private final int port = 40000;
-
     // private final int MAX_DATAGRAM_SIZE = 65535;  // unused
 
     @Override
-    public Void call() throws Exception {
-
+    public Void call() throws Exception
+    {
         final HashMap<DatagramChannel, String> subscribedGroups = new HashMap<>();
-
-        final Bytes<ByteBuffer> bbb           = Bytes.elasticByteBuffer(TransmissionBlock.MAX_SIZE, TransmissionBlock.MAX_SIZE);
-        final TransmissionBlock block         = new TransmissionBlock();
-        final String            queuePathIce  = Config.queueBasePath + "/ice";
+        final Bytes<ByteBuffer> bbb = Bytes.elasticByteBuffer(TransmissionBlock.MAX_SIZE, TransmissionBlock.MAX_SIZE);
+        final TransmissionBlock block = new TransmissionBlock();
+        final String queuePathIce = Config.queueBasePath + "/ice";
 
         long      startTime  = System.currentTimeMillis();
         Histogram lsnInDelay = new Histogram(60_000_000_000L, 3);;
@@ -75,19 +69,15 @@ public class Listener implements Callable<Void> {
         subscribe("224.0.90.0", 40000, sel, subscribedGroups);
         // subscribe("224.0.89.0", 40000, sel, subscribedGroups);
 
-        try (
-            SingleChronicleQueue outQueueIce = SingleChronicleQueueBuilder
-                                                    .single(queuePathIce)
-                                                    .rollCycle(Config.roleCycle)
-                                                    .build();
-        ) {
+        try (SingleChronicleQueue outQueueIce =
+                SingleChronicleQueueBuilder.single(queuePathIce).rollCycle(Config.roleCycle).build())
+        {
             final ExcerptAppender appender = outQueueIce.acquireAppender();
-
             DatagramChannel ch = subscribedGroups.keySet().iterator().next();
             ByteBuffer buf = bbb.underlyingObject();
 
-            // busy wait
-            while (true) {
+            while (true)
+            {
                 // sel.selectNow(key -> {
                 //     try {
                 //         long now = nowNano();
@@ -116,23 +106,28 @@ public class Listener implements Callable<Void> {
                 //         throw new RuntimeException(e);
                 //     }
                 // });
-                if (ch.receive(buf) != null) {
+                if (ch.receive(buf) != null)
+                {
                     long now = nowNano();
                     buf.flip();  // flip buffer for reading
                     bbb.readLimit(buf.remaining()); // update wrapper read cursor
     
                     // process message
                     block.fromByteBuffer(buf);
-                    if (bench && (System.currentTimeMillis() - startTime > WARMUP_TIME_MSEC)) {
+                    if (bench && (System.currentTimeMillis() - startTime > WARMUP_TIME_MSEC))
+                    {
                         long d = now - block.sipBlockTimestamp();
-                        if (d < 0) {
+                        if (d < 0)
+                        {
                             d = 42;
                         }
                         lsnInDelay.recordValue(d);
                     }
 
-                    appender.writeDocument(wire -> {
-                        wire.write("CQS").marshallable(m -> {
+                    appender.writeDocument(wire ->
+                    {
+                        wire.write("CQS").marshallable(m ->
+                        {
                             m.write("data").bytes(bbb);
                             m.write("rcvAt").int64(now);
                         });
@@ -141,7 +136,8 @@ public class Listener implements Callable<Void> {
                     buf.clear();
                 }
 
-                if (bench && System.currentTimeMillis() - startTime > WARMUP_TIME_MSEC + RUN_TIME_MSEC) {
+                if (bench && System.currentTimeMillis() - startTime > WARMUP_TIME_MSEC + RUN_TIME_MSEC)
+                {
                     System.out.println("---------- lsnInDelay (us) ----------");
                     lsnInDelay.outputPercentileDistribution(System.out, 1000.0);  // output in us
                     break;
@@ -155,11 +151,12 @@ public class Listener implements Callable<Void> {
         String addr,
         int port,
         Selector sel,
-        HashMap<DatagramChannel, String> subscribedGroups
-    ) throws IOException {
+        HashMap<DatagramChannel, String> subscribedGroups)
+        throws IOException
+    {
         DatagramChannel ch = DatagramChannel.open(StandardProtocolFamily.INET)
-                                    .setOption(StandardSocketOptions.SO_REUSEADDR, true)
-                                    .bind(new InetSocketAddress(port)); // bind to wildcard address
+            .setOption(StandardSocketOptions.SO_REUSEADDR, true)
+            .bind(new InetSocketAddress(port)); // bind to wildcard address
         ch.configureBlocking(false);
         NetworkInterface iface = NetworkInterface.getByName(networkInterface);
         InetAddress group = InetAddress.getByName(addr);
@@ -170,7 +167,8 @@ public class Listener implements Callable<Void> {
         subscribedGroups.put(ch, addr + ":" + port);
     }
 
-    private long nowNano() {
+    private long nowNano()
+    {
         Instant now = Instant.now();
         return now.getEpochSecond() * 1_000_000_000L + now.getNano();
     }

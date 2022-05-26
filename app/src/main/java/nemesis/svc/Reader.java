@@ -20,10 +20,9 @@ import picocli.CommandLine.Model.CommandSpec;
 @Command(
     name = "reader",
     description = "read from ICE chronicle queue",
-    usageHelpAutoWidth = true
-)
-public class Reader implements Callable<Void> {
-
+    usageHelpAutoWidth = true)
+public class Reader implements Callable<Void>
+{
     @Spec CommandSpec spec;
 
     @Option(names = {"-h", "--help"}, usageHelp = true, description = "help message")
@@ -32,7 +31,8 @@ public class Reader implements Callable<Void> {
     @Option(names = {"-b", "--bench"}, description = "measure inbound delay for 20 sec")
     boolean bench;
 
-    @Option(names = "--timestamp", defaultValue = "${BENCH_TIMESTAMP:-sip}", description = "timestamp used for measurement (sip, rcvAt)")
+    @Option(names = "--timestamp", defaultValue = "${BENCH_TIMESTAMP:-sip}",
+        description = "timestamp used for measurement (sip, rcvAt)")
     String benchTimestamp;
 
     // Constants.
@@ -40,41 +40,38 @@ public class Reader implements Callable<Void> {
     final long RUN_TIME_MSEC    = 20_000;
 
     @Override
-    public Void call() throws Exception {
-
+    public Void call() throws Exception
+    {
         validate();
 
         final String queuePathIce = Config.queueBasePath + "/ice";
+        long startTime = System.currentTimeMillis();
+        Histogram rdrInDelay = new Histogram(60_000_000_000L, 3);
 
-        long      startTime  = System.currentTimeMillis();
-        Histogram rdrInDelay = new Histogram(60_000_000_000L, 3);;
-
-        try (
-            SingleChronicleQueue inQueueIce = SingleChronicleQueueBuilder
-                                                    .single(queuePathIce)
-                                                    .rollCycle(Config.roleCycle)
-                                                    .build();
-        ) {
+        try (SingleChronicleQueue inQueueIce = 
+                SingleChronicleQueueBuilder.single(queuePathIce).rollCycle(Config.roleCycle).build())
+        {
             final ExcerptTailer     tailer = inQueueIce.createTailer();
             final StringBuilder     sb     = new StringBuilder(32);
             final Bytes<ByteBuffer> bbb    = Bytes.elasticByteBuffer(TransmissionBlock.MAX_SIZE, TransmissionBlock.MAX_SIZE);
             final TransmissionBlock block  = new TransmissionBlock();
 
             System.out.println("Starting reader...");
-
-            // Busy wait loop.
-            while (true) {
-                tailer.readDocument(wire -> {
+            while (true)
+            {
+                tailer.readDocument(wire ->
+                {
                     long now = nowNano();
-
                     sb.setLength(0);
-                    wire.readEventName(sb).marshallable(m -> {
+                    wire.readEventName(sb).marshallable(m ->
+                    {
                         m.read("data").bytes(bbb, true);
                         long rcvAt = m.read("rcvAt").int64();
 
                         // process block.
                         block.fromByteBuffer(bbb.underlyingObject());
-                        if (bench && (System.currentTimeMillis() - startTime > WARMUP_TIME_MSEC)) {
+                        if (bench && (System.currentTimeMillis() - startTime > WARMUP_TIME_MSEC))
+                        {
                             if (benchTimestamp == "sip")
                                 rdrInDelay.recordValue(now - block.sipBlockTimestamp());
                             else
@@ -83,7 +80,8 @@ public class Reader implements Callable<Void> {
                     });
                 });
 
-                if (bench && System.currentTimeMillis() - startTime > WARMUP_TIME_MSEC + RUN_TIME_MSEC) {
+                if (bench && System.currentTimeMillis() - startTime > WARMUP_TIME_MSEC + RUN_TIME_MSEC)
+                {
                     System.out.println("---------- rdrInDelay (us) ----------");
                     rdrInDelay.outputPercentileDistribution(System.out, 1000.0);  // output in us
                     break;
@@ -93,18 +91,22 @@ public class Reader implements Callable<Void> {
         }
     }
 
-    private void validate() throws Exception {
-        if (!benchTimestamp.contentEquals("sip") && !benchTimestamp.contentEquals("rcvAt")) {
+    private void validate() throws Exception
+    {
+        if (!benchTimestamp.contentEquals("sip") && !benchTimestamp.contentEquals("rcvAt"))
+        {
             throw new ParameterException(spec.commandLine(), "invalid value " + benchTimestamp + " for --timestamp: 'sip' or 'rcvAt'");
         }
     }
 
-    private long nowNano() {
+    private long nowNano()
+    {
         Instant now = Instant.now();
         return now.getEpochSecond() * 1_000_000_000L + now.getNano();
     }
 
-    void printDebugString(Bytes<ByteBuffer> bbb) {
+    void printDebugString(Bytes<ByteBuffer> bbb)
+    {
         System.out.println(bbb.toHexString());
         System.out.println(bbb.toDebugString());
         System.out.println("readLimit  " + bbb.readLimit());

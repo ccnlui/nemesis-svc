@@ -18,7 +18,9 @@ import nemesis.svc.message.cqs.TransmissionBlock;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-@Command(name = "zgc-listener", usageHelpAutoWidth = true,
+@Command(
+    name = "zgc-listener",
+    usageHelpAutoWidth = true,
     description = "subscribe to marketdata multicast without generate garbage")
 public class ZeroGCListener implements Callable<Void>
 {
