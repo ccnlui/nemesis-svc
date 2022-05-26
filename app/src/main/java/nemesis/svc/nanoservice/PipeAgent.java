@@ -1,4 +1,6 @@
-package nemesis.svc.agent;
+package nemesis.svc.nanoservice;
+
+import static nemesis.svc.nanoservice.Util.retryPublicationResult;
 
 import java.util.concurrent.TimeUnit;
 
@@ -43,7 +45,7 @@ public class PipeAgent implements Agent
             long result;
             while ((result = pub.offer(buffer, offset, length)) <= 0)
             {
-                if (!AgentUtil.retryPublicationResult(result))
+                if (!retryPublicationResult(result))
                     break;
             }
             pipedMsg += 1;

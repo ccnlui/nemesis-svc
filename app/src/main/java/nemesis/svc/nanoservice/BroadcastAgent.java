@@ -1,10 +1,9 @@
-package nemesis.svc.agent;
+package nemesis.svc.nanoservice;
 
+import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
 import org.agrona.DirectBuffer;
-import org.agrona.ExpandableDirectByteBuffer;
-import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.Agent;
 import org.agrona.concurrent.NanoClock;
 import org.agrona.concurrent.SystemNanoClock;
@@ -15,44 +14,38 @@ import io.aeron.FragmentAssembler;
 import io.aeron.Subscription;
 import io.aeron.logbuffer.FragmentHandler;
 import io.aeron.logbuffer.Header;
-import nemesis.svc.nanoservice.BablStreamServer;
 
-public class BablBroadcastAgent implements Agent
+public class BroadcastAgent implements Agent
 {
-    private final Logger LOG = LoggerFactory.getLogger(BablBroadcastAgent.class);
+    private final Logger LOG = LoggerFactory.getLogger(BroadcastAgent.class);
     private final Subscription sub;
-    private final BablStreamServer bablStreamServer;
+    private final StreamServer streamServer;
     private final FragmentHandler assembler;
 
-    private final MutableDirectBuffer outBuf;
+    private final ByteBuffer outBuf;
 
     private final NanoClock clock = new SystemNanoClock();
     private long nowNs = clock.nanoTime();
     private long nextReportTimeNs = nowNs;
     private long broadcastedMsg = 0;
 
-    public BablBroadcastAgent(
+    public BroadcastAgent(
         final Subscription sub,
-        final BablStreamServer bablStreamServer)
+        final StreamServer streamServer)
     {
         this.sub = sub;
-        this.bablStreamServer = bablStreamServer;
+        this.streamServer = streamServer;
         this.assembler = new FragmentAssembler(this::onMessage);
-        this.outBuf = new ExpandableDirectByteBuffer(512);
+        this.outBuf = ByteBuffer.allocateDirect(512);
     }
 
     private void onMessage(DirectBuffer buffer, int offset, int length, Header header)
     {
-        if (bablStreamServer.getNumClients() > 0)
-        {
-            long result;
-            while ((result = bablStreamServer.broadcast(buffer, offset, length, header)) < 0)
-            {
-                if (!AgentUtil.retryPublicationResult(result))
-                    break;
-            }
-            broadcastedMsg += 1;
-        }
+        this.outBuf.clear();
+        buffer.getBytes(offset, outBuf, 0, length);
+        this.outBuf.limit(length);
+        streamServer.broadcast(outBuf);
+        broadcastedMsg += 1;
     }
 
     @Override
@@ -80,6 +73,6 @@ public class BablBroadcastAgent implements Agent
     @Override
     public String roleName()
     {
-        return "bablBroadcastAgent";
+        return "broadcastAgent";
     }
 }

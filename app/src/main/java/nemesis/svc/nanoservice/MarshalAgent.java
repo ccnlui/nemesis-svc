@@ -1,4 +1,6 @@
-package nemesis.svc.agent;
+package nemesis.svc.nanoservice;
+
+import static nemesis.svc.nanoservice.Util.retryPublicationResult;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
@@ -81,7 +83,7 @@ public class MarshalAgent implements Agent
             long result;
             while ((result = pub.offer(outBuf, 0, outBytes)) <= 0)
             {
-                if (!AgentUtil.retryPublicationResult(result))
+                if (!retryPublicationResult(result))
                     break;
             }
             marshalledMsg += 1;

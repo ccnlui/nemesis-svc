@@ -20,23 +20,28 @@ import org.slf4j.LoggerFactory;
 import io.aeron.Aeron;
 import io.aeron.Subscription;
 import io.aeron.driver.MediaDriver;
-import nemesis.svc.agent.BablBroadcastAgent;
-import nemesis.svc.agent.BroadcastAgent;
 
 public class Broadcaster
 {
     private static final Logger LOG = LoggerFactory.getLogger(Broadcaster.class);
 
-    public void run() throws Exception
+    private final MediaDriver mediaDriver;
+    private final Aeron aeron;
+    private final Subscription sub;
+
+    public Broadcaster()
     {
-        final MediaDriver mediaDriver = launchEmbeddedMediaDriverIfConfigured();
-        final Aeron aeron = connectAeron(mediaDriver);
+        this.mediaDriver = launchEmbeddedMediaDriverIfConfigured();
+        this.aeron = connectAeron(this.mediaDriver);
 
         final String inChannel = aeronIpcOrUdpChannel(Config.subEndpoint);
         final int inStream = Config.websocketDataStream;
-        final Subscription sub = aeron.addSubscription(inChannel, inStream);
+        this.sub = aeron.addSubscription(inChannel, inStream);
         LOG.info("in: {}:{}", inChannel, inStream);
+    }
 
+    public void run() throws Exception
+    {
         final ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
 
         AgentRunner agentRunner = null;

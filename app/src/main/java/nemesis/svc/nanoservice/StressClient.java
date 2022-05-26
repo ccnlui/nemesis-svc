@@ -16,25 +16,33 @@ import org.slf4j.LoggerFactory;
 import io.aeron.Aeron;
 import io.aeron.Subscription;
 import io.aeron.driver.MediaDriver;
-import nemesis.svc.agent.ReceiveAgent;
 
 public class StressClient
 {
     private static final Logger LOG = LoggerFactory.getLogger(StressClient.class);
 
-    public void run() throws Exception
+    private final MediaDriver mediaDriver;
+    private final Aeron aeron;
+    private final Subscription sub;
+    private final Histogram histogram;
+
+    public StressClient()
     {
-        final MediaDriver mediaDriver = launchEmbeddedMediaDriverIfConfigured();
-        final Aeron aeron = connectAeron(mediaDriver);
+        this.mediaDriver = launchEmbeddedMediaDriverIfConfigured();
+        this.aeron = connectAeron(mediaDriver);
 
         final String inChannel = aeronIpcOrUdpChannel(Config.subEndpoint);
         final int inStream = Config.exchangeDataStream;
-        final Subscription sub = aeron.addSubscription(inChannel, inStream);
+        this.sub = aeron.addSubscription(inChannel, inStream);
         LOG.info("in: {}:{}", inChannel, inStream);
 
+        this.histogram = new Histogram(TimeUnit.MINUTES.toNanos(1), 3);
+    }
+
+    public void run() throws Exception
+    {
         final ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
 
-        Histogram histogram = new Histogram(TimeUnit.MINUTES.toNanos(1), 3);
         final ReceiveAgent receiveAgent = new ReceiveAgent(sub, histogram, barrier);
         final AgentRunner agentRunner = new AgentRunner(
             Config.idleStrategy,
@@ -47,8 +55,6 @@ public class StressClient
         closeIfNotNull(agentRunner);
         closeIfNotNull(aeron);
         closeIfNotNull(mediaDriver);
-
-        LOG.info("---------- stressClientInDelay (us) ----------");
         histogram.outputPercentileDistribution(System.out, 1000.0);  // output in us
     }    
 }

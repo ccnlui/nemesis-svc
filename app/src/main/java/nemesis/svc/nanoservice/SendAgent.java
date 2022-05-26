@@ -1,4 +1,6 @@
-package nemesis.svc.agent;
+package nemesis.svc.nanoservice;
+
+import static nemesis.svc.nanoservice.Util.retryPublicationResult;
 
 import java.util.concurrent.TimeUnit;
 
@@ -50,7 +52,7 @@ public class SendAgent implements Agent
             long pos;
             while ((pos = pub.offer(unsafeBuffer)) <= 0)
             {
-                if (!AgentUtil.retryPublicationResult(pos))
+                if (!retryPublicationResult(pos))
                     break;
             }
             if (pos > 0)

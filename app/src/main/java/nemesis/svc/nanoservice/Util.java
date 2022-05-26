@@ -6,8 +6,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.aeron.Aeron;
+import io.aeron.Publication;
 import io.aeron.driver.MediaDriver;
 import io.aeron.driver.ThreadingMode;
+import io.aeron.exceptions.AeronException;
 
 final class Util
 {
@@ -66,5 +68,21 @@ final class Util
     {
         if (closeable != null)
             closeable.close();
+    }
+
+    static boolean retryPublicationResult(final long result)
+    {
+        if (result == Publication.ADMIN_ACTION ||
+            result == Publication.BACK_PRESSURED)
+        {
+            return true;
+        }
+        else if (result == Publication.CLOSED || 
+            result == Publication.MAX_POSITION_EXCEEDED ||
+            result == Publication.NOT_CONNECTED)
+        {
+            throw new AeronException("Publication error: " + Publication.errorString(result));
+        }
+        return false;
     }
 }

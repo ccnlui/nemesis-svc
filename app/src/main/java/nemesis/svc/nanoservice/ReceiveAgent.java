@@ -1,4 +1,4 @@
-package nemesis.svc.agent;
+package nemesis.svc.nanoservice;
 
 import static java.lang.Math.max;
 

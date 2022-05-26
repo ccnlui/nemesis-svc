@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import io.aeron.Aeron;
 import io.aeron.Publication;
 import io.aeron.driver.MediaDriver;
-import nemesis.svc.agent.SendAgent;
 import nemesis.svc.message.Quote;
 import nemesis.svc.message.Trade;
 
@@ -24,16 +23,23 @@ public class StressServer
 {
     private static final Logger LOG = LoggerFactory.getLogger(StressServer.class);
 
-    public void run() throws Exception
+    private final MediaDriver mediaDriver;
+    private final Aeron aeron;
+    private final Publication pub;
+
+    public StressServer()
     {
-        final MediaDriver mediaDriver = launchEmbeddedMediaDriverIfConfigured();
-        final Aeron aeron = connectAeron(mediaDriver);
+        this.mediaDriver = launchEmbeddedMediaDriverIfConfigured();
+        this.aeron = connectAeron(mediaDriver);
 
         final String outChannel = aeronIpcOrUdpChannel(Config.pubEndpoint);
         final int outStream = Config.exchangeDataStream;
-        final Publication pub = aeron.addPublication(outChannel, outStream);
+        this.pub = aeron.addPublication(outChannel, outStream);
         LOG.info("out: {}:{}", outChannel, outStream);
+    }
 
+    public void run() throws Exception
+    {
         final ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
 
         Quote quote = new Quote();
@@ -49,7 +55,6 @@ public class StressServer
             new CompositeAgent(sendQuotes, sendTrades)
         );
         AgentRunner.startOnThread(agentRunner);
-
         barrier.await();
         closeIfNotNull(agentRunner);
         closeIfNotNull(aeron);
