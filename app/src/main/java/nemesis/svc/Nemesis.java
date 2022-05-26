@@ -1,5 +1,16 @@
 package nemesis.svc;
 
+import nemesis.svc.command.Broadcaster;
+import nemesis.svc.command.Connector;
+import nemesis.svc.command.Counter;
+import nemesis.svc.command.Listener;
+import nemesis.svc.command.Marshaller;
+import nemesis.svc.command.Publisher;
+import nemesis.svc.command.Reader;
+import nemesis.svc.command.StressClient;
+import nemesis.svc.command.StressServer;
+import nemesis.svc.command.Subscriber;
+import nemesis.svc.command.ZeroGCListener;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 

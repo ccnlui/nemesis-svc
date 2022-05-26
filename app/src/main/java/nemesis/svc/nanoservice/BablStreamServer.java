@@ -1,4 +1,4 @@
-package nemesis.svc;
+package nemesis.svc.nanoservice;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

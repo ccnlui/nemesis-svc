@@ -1,4 +1,4 @@
-package nemesis.svc;
+package nemesis.svc.nanoservice;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -14,7 +14,7 @@ import org.agrona.LangUtil;
 import org.agrona.collections.ArrayUtil;
 import org.agrona.nio.TransportPoller;
 
-final class UdpTransportPoller extends TransportPoller
+public final class UdpTransportPoller extends TransportPoller
 {
     private static final DatagramChannel[] EMPTY_CHANNELS = new DatagramChannel[0];
     private DatagramChannel[] channels = EMPTY_CHANNELS;
@@ -106,7 +106,7 @@ final class UdpTransportPoller extends TransportPoller
         }
     }
 
-    private int poll(final DatagramChannel ch, PacketHandler packetHandler)
+    public int poll(final DatagramChannel ch, PacketHandler packetHandler)
     {
         int bytesReceived = 0;
         byteBuffer.clear();

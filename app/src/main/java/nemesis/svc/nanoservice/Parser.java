@@ -1,4 +1,4 @@
-package nemesis.svc;
+package nemesis.svc.nanoservice;
 
 import org.agrona.concurrent.NanoClock;
 import org.agrona.concurrent.SystemNanoClock;
@@ -26,7 +26,7 @@ public class Parser
     private long INT_TO_LONG_MASK = 0x00_00_00_00_FF_FF_FF_FF;
     private int BYTE_TO_INT_MASK = 0x00_00_00_FF;
 
-    void onTransmissionBlock(TransmissionBlock block)
+    public void onTransmissionBlock(TransmissionBlock block)
     {
         // block.parseHeader();
         long sequenceNumber = block.blockSequenceNumber() & INT_TO_LONG_MASK;
@@ -77,7 +77,7 @@ public class Parser
         lastSequenceNumber = sequenceNumber + messagesInBlock;
     }
 
-    boolean onScheduleReport()
+    public boolean onScheduleReport()
     {
         nowNs = clock.nanoTime();
         if (nextReportTimeNs <= nowNs)
@@ -88,7 +88,7 @@ public class Parser
         return false;
     }
 
-    void reportCounters()
+    public void reportCounters()
     {
         LOG.info("-------------------------------------------------------------");
         LOG.info("        received blocks = {}", receivedBlocks);

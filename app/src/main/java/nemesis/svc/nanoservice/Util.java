@@ -1,4 +1,4 @@
-package nemesis.svc;
+package nemesis.svc.nanoservice;
 
 import org.agrona.concurrent.BusySpinIdleStrategy;
 import org.agrona.concurrent.NoOpIdleStrategy;

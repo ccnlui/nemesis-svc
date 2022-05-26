@@ -15,7 +15,7 @@ import io.aeron.FragmentAssembler;
 import io.aeron.Subscription;
 import io.aeron.logbuffer.FragmentHandler;
 import io.aeron.logbuffer.Header;
-import nemesis.svc.BablStreamServer;
+import nemesis.svc.nanoservice.BablStreamServer;
 
 public class BablBroadcastAgent implements Agent
 {

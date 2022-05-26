@@ -14,7 +14,7 @@ import io.aeron.FragmentAssembler;
 import io.aeron.Subscription;
 import io.aeron.logbuffer.FragmentHandler;
 import io.aeron.logbuffer.Header;
-import nemesis.svc.StreamServer;
+import nemesis.svc.nanoservice.StreamServer;
 
 public class BroadcastAgent implements Agent
 {

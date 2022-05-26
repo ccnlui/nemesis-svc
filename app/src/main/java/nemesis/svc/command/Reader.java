@@ -1,4 +1,4 @@
-package nemesis.svc;
+package nemesis.svc.command;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
@@ -7,6 +7,7 @@ import java.util.concurrent.Callable;
 import org.HdrHistogram.Histogram;
 
 import nemesis.svc.message.cqs.TransmissionBlock;
+import nemesis.svc.nanoservice.Config;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.queue.ExcerptTailer;
 import net.openhft.chronicle.queue.impl.single.SingleChronicleQueue;

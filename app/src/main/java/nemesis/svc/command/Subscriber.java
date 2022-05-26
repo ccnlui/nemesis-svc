@@ -1,4 +1,4 @@
-package nemesis.svc;
+package nemesis.svc.command;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;

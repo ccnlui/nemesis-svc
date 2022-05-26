@@ -1,4 +1,4 @@
-package nemesis.svc;
+package nemesis.svc.command;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import nemesis.svc.message.cqs.TransmissionBlock;
+import nemesis.svc.nanoservice.Parser;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -86,8 +87,8 @@ public class Counter implements Callable<Void>
         String addr,
         int port,
         Selector sel,
-        HashMap<DatagramChannel, String> subscribedGroups
-    ) throws IOException
+        HashMap<DatagramChannel, String> subscribedGroups)
+        throws IOException
     {
         DatagramChannel ch = DatagramChannel.open(StandardProtocolFamily.INET)
             .setOption(StandardSocketOptions.SO_REUSEADDR, true)

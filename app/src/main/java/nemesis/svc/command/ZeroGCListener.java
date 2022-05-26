@@ -1,4 +1,4 @@
-package nemesis.svc;
+package nemesis.svc.command;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -15,6 +15,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import nemesis.svc.message.cqs.TransmissionBlock;
+import nemesis.svc.nanoservice.PacketHandler;
+import nemesis.svc.nanoservice.Parser;
+import nemesis.svc.nanoservice.UdpTransportPoller;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 

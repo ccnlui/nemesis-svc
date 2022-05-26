@@ -1,4 +1,4 @@
-package nemesis.svc;
+package nemesis.svc.command;
 
 import java.io.IOException;
 import java.net.InetAddress;

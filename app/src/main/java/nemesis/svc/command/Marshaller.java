@@ -1,23 +1,8 @@
-package nemesis.svc;
-
-import static nemesis.svc.Util.aeronIpcOrUdpChannel;
-import static nemesis.svc.Util.closeIfNotNull;
-import static nemesis.svc.Util.connectAeron;
-import static nemesis.svc.Util.launchEmbeddedMediaDriverIfConfigured;
+package nemesis.svc.command;
 
 import java.util.concurrent.Callable;
-
-import org.agrona.concurrent.AgentRunner;
-import org.agrona.concurrent.ShutdownSignalBarrier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import io.aeron.Aeron;
-import io.aeron.Publication;
-import io.aeron.Subscription;
-import io.aeron.driver.MediaDriver;
-import nemesis.svc.agent.MarshalAgent;
 import nemesis.svc.message.Message;
+import nemesis.svc.nanoservice.Config;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
@@ -50,38 +35,11 @@ public class Marshaller implements Callable<Void>
     @Option(names = "--format", description = "message format: json or msgpack")
     Message.Format format;
 
-    private static final Logger LOG = LoggerFactory.getLogger(Marshaller.class);
-
     @Override
     public Void call() throws Exception
     {
         mergeConfig();
-
-        final MediaDriver mediaDriver = launchEmbeddedMediaDriverIfConfigured();
-        final Aeron aeron = connectAeron(mediaDriver);
-
-        final String inChannel = aeronIpcOrUdpChannel(Config.subEndpoint);
-        final String outChannel = aeronIpcOrUdpChannel(Config.pubEndpoint);
-        final int inStream = Config.pipedDataStream;
-        final int outStream = Config.websocketDataStream;
-        final Publication pub = aeron.addPublication(outChannel, outStream);
-        final Subscription sub = aeron.addSubscription(inChannel, inStream);
-        LOG.info("in: {}:{}", inChannel, inStream);
-        LOG.info("out: {}:{}", outChannel, outStream);
-
-        final ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
-        final MarshalAgent marshalAgent = new MarshalAgent(sub, pub, Config.messageFormat);
-        final AgentRunner agentRunner = new AgentRunner(
-            Config.idleStrategy,
-            Throwable::printStackTrace,
-            null,
-            marshalAgent
-        );
-        AgentRunner.startOnThread(agentRunner);
-        barrier.await();
-        closeIfNotNull(agentRunner);
-        closeIfNotNull(aeron);
-        closeIfNotNull(mediaDriver);
+        new nemesis.svc.nanoservice.Marshaller().run();
         return null;
     }
 
