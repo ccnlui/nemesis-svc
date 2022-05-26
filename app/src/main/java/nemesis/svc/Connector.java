@@ -1,13 +1,15 @@
 package nemesis.svc;
 
+import static nemesis.svc.Util.aeronIpcOrUdpChannel;
+import static nemesis.svc.Util.closeIfNotNull;
+import static nemesis.svc.Util.connectAeron;
+import static nemesis.svc.Util.launchEmbeddedMediaDriverIfConfigured;
+
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import org.HdrHistogram.Histogram;
 import org.agrona.concurrent.AgentRunner;
-import org.agrona.concurrent.BusySpinIdleStrategy;
-import org.agrona.concurrent.IdleStrategy;
-import org.agrona.concurrent.NoOpIdleStrategy;
 import org.agrona.concurrent.ShutdownSignalBarrier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +18,6 @@ import io.aeron.Aeron;
 import io.aeron.Publication;
 import io.aeron.Subscription;
 import io.aeron.driver.MediaDriver;
-import io.aeron.driver.ThreadingMode;
 import nemesis.svc.agent.PipeAgent;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -34,99 +35,73 @@ public class Connector implements Callable<Void>
         description = "launch with embedded media driver (default ${DEFAULT-VALUE})")
     boolean embeddedMediaDriver;
 
-    @Option(names = "--sub-endpoint", defaultValue = "${SUB_ENDPOINT:-127.0.0.1:2000}",
-        description = "aeron udp transport endpoint from which messages are subscribed in address:port format (default: \"${DEFAULT-VALUE}\")")
-    String subEndpoint;
-
     @Option(names = "--aeron-dir", description = "override directory name for embedded aeron media driver")
     String aeronDir;
+
+    @Option(names = "--pub-endpoint", description = "aeron udp transport endpoint to which messages are published <address:port>")
+    String pubEndpoint;
+
+    @Option(names = "--sub-endpoint", description = "aeron udp transport endpoint from which messages are subscribed <address:port>")
+    String subEndpoint;
 
     private static final Logger LOG = LoggerFactory.getLogger(Connector.class);
 
     @Override
     public Void call() throws Exception
     {
-        final String inChannel = "aeron:udp?endpoint=" + subEndpoint + "|mtu=1408";
-        final String outChannel = "aeron:ipc";
-        final int inStream = 10;
-        final int outStream = 11;
-        final IdleStrategy idleStrategy = new BusySpinIdleStrategy();
-        final ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
+        mergeConfig();
 
         final MediaDriver mediaDriver = launchEmbeddedMediaDriverIfConfigured();
-        String aeronDirName = mediaDriver == null ? null : mediaDriver.aeronDirectoryName();
-        final Aeron aeron = connectAeron(aeronDirName);
+        final Aeron aeron = connectAeron(mediaDriver);
 
-        // construct publication and subscription
-        final Subscription sub = aeron.addSubscription(inChannel, inStream);
+        final String inChannel = aeronIpcOrUdpChannel(Config.subEndpoint);
+        final String outChannel = aeronIpcOrUdpChannel(Config.pubEndpoint);
+        final int inStream = Config.exchangeDataStream;
+        final int outStream = Config.pipedDataStream;
         final Publication pub = aeron.addPublication(outChannel, outStream);
+        final Subscription sub = aeron.addSubscription(inChannel, inStream);
+        LOG.info("in: {}:{}", inChannel, inStream);
+        LOG.info("out: {}:{}", outChannel, outStream);
 
-        // construct the agents
+        final ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
+
         Histogram histogram = new Histogram(TimeUnit.MINUTES.toNanos(1), 3);
         final PipeAgent pipeAgent = new PipeAgent(sub, pub);
         final AgentRunner agentRunner = new AgentRunner(
-            idleStrategy,
+            Config.idleStrategy,
             Throwable::printStackTrace,
             null,
             pipeAgent
         );
 
-        LOG.info("connector: in: {}:{}", inChannel, inStream);
-        LOG.info("connector: out: {}:{}", outChannel, outStream);
         AgentRunner.startOnThread(agentRunner);
-
-        // wait for the shutdown signal
         barrier.await();
-
-        // close the resources
         closeIfNotNull(agentRunner);
         closeIfNotNull(aeron);
         closeIfNotNull(mediaDriver);
 
         LOG.info("---------- connectorInDelay (us) ----------");
         histogram.outputPercentileDistribution(System.out, 1000.0);  // output in us
-
         return null;
     }
 
-    private MediaDriver launchEmbeddedMediaDriverIfConfigured()
+    private void mergeConfig()
     {
-        if (embeddedMediaDriver)
+        if (this.embeddedMediaDriver)
         {
-            MediaDriver.Context mediaDriverCtx = new MediaDriver.Context()
-                .dirDeleteOnStart(true)
-                .threadingMode(ThreadingMode.DEDICATED)
-                .conductorIdleStrategy(new BusySpinIdleStrategy())
-                .senderIdleStrategy(new NoOpIdleStrategy())
-                .receiverIdleStrategy(new NoOpIdleStrategy())
-                .dirDeleteOnShutdown(true);
-            if (aeronDir != null)
-                mediaDriverCtx = mediaDriverCtx.aeronDirectoryName(aeronDir);
-            MediaDriver md = MediaDriver.launchEmbedded(mediaDriverCtx);
-
-            LOG.info(mediaDriverCtx.toString());
-            return md;
+            Config.embeddedMediaDriver = this.embeddedMediaDriver;
         }
-        return null;
-    }
-
-    private Aeron connectAeron(String aeronDirName)
-    {
-        Aeron.Context aeronCtx = new Aeron.Context()
-            .idleStrategy(new NoOpIdleStrategy());
-        if (aeronDirName != null)
-            aeronCtx = aeronCtx.aeronDirectoryName(aeronDirName);
-        else if (aeronDir != null)
-            aeronCtx = aeronCtx.aeronDirectoryName(aeronDir);
-        LOG.info(aeronCtx.toString());
-
-        final Aeron aeron = Aeron.connect(aeronCtx);
-        return aeron;
-    }
-
-    private void closeIfNotNull(final AutoCloseable closeable) throws Exception
-    {
-        if (closeable != null)
-            closeable.close();
+        if (this.aeronDir != null && !this.aeronDir.isEmpty())
+        {
+            Config.aeronDir = this.aeronDir;
+        }
+        if (this.pubEndpoint != null && !this.pubEndpoint.isEmpty())
+        {
+            Config.pubEndpoint = this.pubEndpoint;
+        }
+        if (this.subEndpoint != null && !this.subEndpoint.isEmpty())
+        {
+            Config.subEndpoint = this.subEndpoint;
+        }
     }
 }

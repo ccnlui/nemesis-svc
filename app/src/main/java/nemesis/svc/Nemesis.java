@@ -7,8 +7,7 @@ import picocli.CommandLine.Command;
     name = "nemesis",
     mixinStandardHelpOptions = true,
     usageHelpAutoWidth = true,
-    description = "nemesis nanoservices"
-)
+    description = "nemesis nanoservices")
 public class Nemesis
 {
     public static void main( String[] args )
@@ -25,6 +24,7 @@ public class Nemesis
         cmd.addSubcommand("connector", Connector.class);
         cmd.addSubcommand("marshaller", Marshaller.class);
         cmd.addSubcommand("broadcaster", Broadcaster.class);
+        cmd.setCaseInsensitiveEnumValuesAllowed(true);
         System.exit(cmd.execute(args));
     }
 }

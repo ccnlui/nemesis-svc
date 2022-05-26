@@ -46,7 +46,7 @@ public class BablBroadcastAgent implements Agent
         if (bablStreamServer.getNumClients() > 0)
         {
             long result;
-            while ((result = bablStreamServer.broadcast(buffer, offset, length, header)) <= 0)
+            while ((result = bablStreamServer.broadcast(buffer, offset, length, header)) < 0)
             {
                 if (!AgentUtil.retryPublicationResult(result))
                     break;
@@ -80,6 +80,6 @@ public class BablBroadcastAgent implements Agent
     @Override
     public String roleName()
     {
-        return "broadcastAgent";
+        return "bablBroadcastAgent";
     }
 }

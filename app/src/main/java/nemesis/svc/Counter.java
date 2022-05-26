@@ -23,8 +23,7 @@ import picocli.CommandLine.Option;
 @Command(
     name = "counter",
     description = "subscribe to marketdata multicast and count sequence numbers",
-    usageHelpAutoWidth = true
-)
+    usageHelpAutoWidth = true)
 public class Counter implements Callable<Void>
 {
     @Option(names = {"-h", "--help"}, usageHelp = true, description = "help message")
@@ -49,7 +48,6 @@ public class Counter implements Callable<Void>
     // private final char line = 'A';
     // private final String addr = "224.0.90.0";
     // private final int port = 40000;
-
     // private final int MAX_DATAGRAM_SIZE = 65535;  // unused
 
     private static final Logger LOG = LoggerFactory.getLogger(Counter.class);

@@ -78,8 +78,8 @@ application {
         // "-Xlog:gc*::time",
 
         // Heap size.
-        // "-XX:InitialHeapSize=64m",
-        // "-XX:MaxHeapSize=64m",
+        "-XX:InitialHeapSize=64m",
+        "-XX:MaxHeapSize=64m",
 
         // JDK 17 Strongly Encapsulated JDK Internals
         // chronicle

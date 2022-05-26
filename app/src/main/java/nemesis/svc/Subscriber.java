@@ -20,12 +20,10 @@ import nemesis.svc.message.cqs.TransmissionBlock;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-@Command
-(
+@Command(
     name = "subscriber",
     description = "subscribe to marketdata via aeron udp messages",
-    usageHelpAutoWidth = true
-)
+    usageHelpAutoWidth = true)
 public class Subscriber implements Callable<Void>
 {
     @Option(names = {"-h", "--help"}, usageHelp = true, description = "help message")
