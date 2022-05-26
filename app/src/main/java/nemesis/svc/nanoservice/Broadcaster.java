@@ -65,8 +65,8 @@ public class Broadcaster
             }
             case "java-websocket" ->
             {
-                final StreamServer streamServer = new StreamServer(Config.websocketPort);
-                final BroadcastAgent broadcastAgent = new BroadcastAgent(sub, streamServer);
+                final JwsStreamServer streamServer = new JwsStreamServer(Config.websocketPort);
+                final JwsBroadcastAgent broadcastAgent = new JwsBroadcastAgent(sub, streamServer);
                 agentRunner = new AgentRunner(
                     Config.idleStrategy,
                     Throwable::printStackTrace,

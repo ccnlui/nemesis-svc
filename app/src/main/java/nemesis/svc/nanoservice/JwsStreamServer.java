@@ -8,11 +8,11 @@ import org.java_websocket.server.WebSocketServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class StreamServer extends WebSocketServer
+public class JwsStreamServer extends WebSocketServer
 {
-    private static Logger LOG = LoggerFactory.getLogger(StreamServer.class);
+    private static Logger LOG = LoggerFactory.getLogger(JwsStreamServer.class);
 
-    StreamServer(int port)
+    JwsStreamServer(int port)
     {
         super(new InetSocketAddress(port));
     }

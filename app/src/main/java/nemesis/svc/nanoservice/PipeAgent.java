@@ -29,9 +29,7 @@ public class PipeAgent implements Agent
     private long nextReportTimeNs = nowNs;
     private long pipedMsg = 0;
 
-    public PipeAgent(
-        final Subscription sub,
-        final Publication pub)
+    public PipeAgent(final Subscription sub, final Publication pub)
     {
         this.sub = sub;
         this.pub = pub;

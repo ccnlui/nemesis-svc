@@ -49,7 +49,6 @@ public class Connector
             null,
             pipeAgent
         );
-
         AgentRunner.startOnThread(agentRunner);
         barrier.await();
         closeIfNotNull(agentRunner);

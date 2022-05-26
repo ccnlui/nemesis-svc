@@ -15,11 +15,11 @@ import io.aeron.Subscription;
 import io.aeron.logbuffer.FragmentHandler;
 import io.aeron.logbuffer.Header;
 
-public class BroadcastAgent implements Agent
+public class JwsBroadcastAgent implements Agent
 {
-    private final Logger LOG = LoggerFactory.getLogger(BroadcastAgent.class);
+    private final Logger LOG = LoggerFactory.getLogger(JwsBroadcastAgent.class);
     private final Subscription sub;
-    private final StreamServer streamServer;
+    private final JwsStreamServer streamServer;
     private final FragmentHandler assembler;
 
     private final ByteBuffer outBuf;
@@ -29,9 +29,9 @@ public class BroadcastAgent implements Agent
     private long nextReportTimeNs = nowNs;
     private long broadcastedMsg = 0;
 
-    public BroadcastAgent(
+    public JwsBroadcastAgent(
         final Subscription sub,
-        final StreamServer streamServer)
+        final JwsStreamServer streamServer)
     {
         this.sub = sub;
         this.streamServer = streamServer;

@@ -45,8 +45,8 @@ public class ReceiveAgent implements Agent
     public ReceiveAgent(
         final Subscription sub,
         final Histogram histogram,
-        final ShutdownSignalBarrier barrier
-    ) {
+        final ShutdownSignalBarrier barrier)
+    {
         this.sub = sub;
         this.unsafeBuffer = new UnsafeBuffer(ByteBuffer.allocateDirect(Message.MAX_SIZE));
         this.quote = new Quote();

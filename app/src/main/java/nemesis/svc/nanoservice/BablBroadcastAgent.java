@@ -21,10 +21,10 @@ import io.aeron.logbuffer.Header;
 public class BablBroadcastAgent implements Agent
 {
     private final Logger LOG = LoggerFactory.getLogger(BablBroadcastAgent.class);
+
     private final Subscription sub;
     private final BablStreamServer bablStreamServer;
     private final FragmentHandler assembler;
-
     private final MutableDirectBuffer outBuf;
 
     private final NanoClock clock = new SystemNanoClock();
@@ -68,7 +68,8 @@ public class BablBroadcastAgent implements Agent
         return fragmentReceived;
     }
 
-    private boolean onScheduleReport() {
+    private boolean onScheduleReport()
+    {
         nowNs = clock.nanoTime();
         if (nextReportTimeNs <= nowNs)
         {

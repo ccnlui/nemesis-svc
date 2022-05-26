@@ -8,7 +8,8 @@ import net.openhft.chronicle.wire.SelfDescribingMarshallable;
 //-----------------------------------------------------------------------------
 // CQS_Pillar_Output_Specification 3.0
 //-----------------------------------------------------------------------------
-// class BlockHeader {
+// class BlockHeader
+// {
 //     byte  version;                 // 1 byte  (offset 0)
 //     short blockSize;               // 2 bytes (offset 1)
 //     byte  dataFeedIndicator;       // 1 byte  (offset 3)
@@ -19,7 +20,8 @@ import net.openhft.chronicle.wire.SelfDescribingMarshallable;
 //     short blockCheckSum;           // 2 bytes (offset 18)
 // }                                  // total = 20 bytes
 
-// class MessageHeader {
+// class MessageHeader
+// {
 //     short messageLength;              // 2 bytes (offset 0)
 //     byte  messageCategory;            // 1 byte  (offset 2)
 //     byte  messageType;                // 1 byte  (offset 3)
