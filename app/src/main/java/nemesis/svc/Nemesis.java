@@ -5,6 +5,7 @@ import nemesis.svc.command.Connector;
 import nemesis.svc.command.Counter;
 import nemesis.svc.command.Listener;
 import nemesis.svc.command.Marshaller;
+import nemesis.svc.command.NyseServer;
 import nemesis.svc.command.Publisher;
 import nemesis.svc.command.Reader;
 import nemesis.svc.command.StressClient;
@@ -35,7 +36,11 @@ public class Nemesis
         cmd.addSubcommand("connector", Connector.class);
         cmd.addSubcommand("marshaller", Marshaller.class);
         cmd.addSubcommand("broadcaster", Broadcaster.class);
+        cmd.addSubcommand("nyse-server", NyseServer.class);
         cmd.setCaseInsensitiveEnumValuesAllowed(true);
-        System.exit(cmd.execute(args));
+
+        int rc = cmd.execute(args);
+        System.out.println("bye!");
+        System.exit(rc);
     }
 }

@@ -43,7 +43,7 @@ public final class Config
     public static long quoteIntervalUs = 100;
     public static long tradeIntervalUs = 200;
 
-    // Zero GC Listener
+    // UDP Multicast
     public static String networkInterface = "eth0";
     public static String addr = "224.0.90.0";
     public static int port = 40000;

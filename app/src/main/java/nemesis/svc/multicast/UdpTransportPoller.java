@@ -106,7 +106,7 @@ public final class UdpTransportPoller extends TransportPoller
         }
     }
 
-    public int poll(final DatagramChannel ch, PacketHandler packetHandler)
+    private int poll(final DatagramChannel ch, PacketHandler packetHandler)
     {
         int bytesReceived = 0;
         byteBuffer.clear();

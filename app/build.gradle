@@ -34,10 +34,14 @@ dependencies {
     implementation 'net.openhft:chronicle-queue'
     implementation 'net.openhft:chronicle-core'
     implementation 'net.openhft:chronicle-wire'
-    implementation 'org.slf4j:slf4j-simple'
-    // Java Thread Affinity (version 5.5.0 in bom doesn't work)
+    // implementation 'org.slf4j:slf4j-simple'
+
+    // Java Thread Affinity (version 5.5.0 in chronicle bom doesn't work)
     implementation 'net.java.dev.jna:jna:5.11.0'
     implementation 'net.java.dev.jna:jna-platform:5.11.0'
+
+    // logback
+    implementation 'ch.qos.logback:logback-classic:1.2.11'
 
     // Picocli
     implementation 'info.picocli:picocli:4.6.3'

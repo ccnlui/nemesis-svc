@@ -21,7 +21,6 @@ public class ZeroGCListener
 {
     private static final Logger LOG = LoggerFactory.getLogger(ZeroGCListener.class);
 
-    private final ByteBuffer inBuf;
     private final UdpTransportPoller udpPoller;
     private final TransmissionBlock block;
     private final Parser parser;
@@ -29,11 +28,11 @@ public class ZeroGCListener
 
     public ZeroGCListener()
     {
-        this.inBuf = BufferUtil.allocateDirectAligned(Config.maxUdpMessageSize, 64);
-        this.udpPoller = new UdpTransportPoller(this.inBuf, Throwable::printStackTrace);
+        final ByteBuffer inBuf = BufferUtil.allocateDirectAligned(Config.maxUdpMessageSize, 64);
+        this.udpPoller = new UdpTransportPoller(inBuf, Throwable::printStackTrace);
         this.block = new TransmissionBlock();
         this.parser = new Parser();
-        this.dataHandler = buf -> this.onBlock(buf);  // this is needed to avoid garbage
+        this.dataHandler = b -> this.onBlock(b);  // this is needed to avoid garbage
     }
     
     public void run() throws Exception
@@ -59,8 +58,13 @@ public class ZeroGCListener
         // parser.onTransmissionBlock(block);
     }
 
-    private void multicastSubscribe(String networkInterface, String addr, int port, UdpTransportPoller udpPoller)
-    throws IOException
+    // multicastSubscribe has to be confined to the same thread as udp transport poller
+    private void multicastSubscribe(
+        final String networkInterface,
+        final String addr, 
+        final int port,
+        final UdpTransportPoller udpPoller)
+        throws IOException
     {
         LOG.info("subscribe to {}:{} on {}", addr, port, networkInterface);
         DatagramChannel ch = DatagramChannel.open(StandardProtocolFamily.INET)

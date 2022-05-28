@@ -1,13 +1,5 @@
 package nemesis.svc.nanoservice;
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.NetworkInterface;
-import java.net.StandardProtocolFamily;
-import java.net.StandardSocketOptions;
-import java.nio.channels.DatagramChannel;
-
 import org.agrona.concurrent.BusySpinIdleStrategy;
 import org.agrona.concurrent.NoOpIdleStrategy;
 import org.slf4j.Logger;
