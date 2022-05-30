@@ -74,32 +74,32 @@ public class NyseServer
         try
         {
             // Tape A - trades
-            multicastSubscribe(Config.networkInterface, "224.0.89.0", 40000, udpPoller);
-            multicastSubscribe(Config.networkInterface, "224.0.89.1", 40001, udpPoller);
-            multicastSubscribe(Config.networkInterface, "224.0.89.2", 40002, udpPoller);
-            multicastSubscribe(Config.networkInterface, "224.0.89.3", 40003, udpPoller);
-            multicastSubscribe(Config.networkInterface, "224.0.89.4", 40004, udpPoller);
-            multicastSubscribe(Config.networkInterface, "224.0.89.5", 40005, udpPoller);
-            multicastSubscribe(Config.networkInterface, "224.0.89.6", 40006, udpPoller);
-            multicastSubscribe(Config.networkInterface, "224.0.89.7", 40007, udpPoller);
-            multicastSubscribe(Config.networkInterface, "224.0.89.8", 40008, udpPoller);
-            multicastSubscribe(Config.networkInterface, "224.0.89.9", 40009, udpPoller);
-            multicastSubscribe(Config.networkInterface, "224.0.89.10", 40010, udpPoller);
-            multicastSubscribe(Config.networkInterface, "224.0.89.11", 40011, udpPoller);
+            // multicastSubscribe(Config.networkInterface, "224.0.89.0", 40000, udpPoller);
+            // multicastSubscribe(Config.networkInterface, "224.0.89.1", 40001, udpPoller);
+            // multicastSubscribe(Config.networkInterface, "224.0.89.2", 40002, udpPoller);
+            // multicastSubscribe(Config.networkInterface, "224.0.89.3", 40003, udpPoller);
+            // multicastSubscribe(Config.networkInterface, "224.0.89.4", 40004, udpPoller);
+            // multicastSubscribe(Config.networkInterface, "224.0.89.5", 40005, udpPoller);
+            // multicastSubscribe(Config.networkInterface, "224.0.89.6", 40006, udpPoller);
+            // multicastSubscribe(Config.networkInterface, "224.0.89.7", 40007, udpPoller);
+            // multicastSubscribe(Config.networkInterface, "224.0.89.8", 40008, udpPoller);
+            // multicastSubscribe(Config.networkInterface, "224.0.89.9", 40009, udpPoller);
+            // multicastSubscribe(Config.networkInterface, "224.0.89.10", 40010, udpPoller);
+            // multicastSubscribe(Config.networkInterface, "224.0.89.11", 40011, udpPoller);
 
             // Tape B - trades
-            multicastSubscribe(Config.networkInterface, "224.0.89.32", 40000, udpPoller);
-            multicastSubscribe(Config.networkInterface, "224.0.89.33", 40001, udpPoller);
-            multicastSubscribe(Config.networkInterface, "224.0.89.34", 40002, udpPoller);
-            multicastSubscribe(Config.networkInterface, "224.0.89.35", 40003, udpPoller);
-            multicastSubscribe(Config.networkInterface, "224.0.89.36", 40004, udpPoller);
-            multicastSubscribe(Config.networkInterface, "224.0.89.37", 40005, udpPoller);
-            multicastSubscribe(Config.networkInterface, "224.0.89.38", 40006, udpPoller);
-            multicastSubscribe(Config.networkInterface, "224.0.89.39", 40007, udpPoller);
-            multicastSubscribe(Config.networkInterface, "224.0.89.40", 40008, udpPoller);
-            multicastSubscribe(Config.networkInterface, "224.0.89.41", 40009, udpPoller);
-            multicastSubscribe(Config.networkInterface, "224.0.89.42", 40010, udpPoller);
-            multicastSubscribe(Config.networkInterface, "224.0.89.43", 40011, udpPoller);
+            // multicastSubscribe(Config.networkInterface, "224.0.89.32", 40000, udpPoller);
+            // multicastSubscribe(Config.networkInterface, "224.0.89.33", 40001, udpPoller);
+            // multicastSubscribe(Config.networkInterface, "224.0.89.34", 40002, udpPoller);
+            // multicastSubscribe(Config.networkInterface, "224.0.89.35", 40003, udpPoller);
+            // multicastSubscribe(Config.networkInterface, "224.0.89.36", 40004, udpPoller);
+            // multicastSubscribe(Config.networkInterface, "224.0.89.37", 40005, udpPoller);
+            // multicastSubscribe(Config.networkInterface, "224.0.89.38", 40006, udpPoller);
+            // multicastSubscribe(Config.networkInterface, "224.0.89.39", 40007, udpPoller);
+            // multicastSubscribe(Config.networkInterface, "224.0.89.40", 40008, udpPoller);
+            // multicastSubscribe(Config.networkInterface, "224.0.89.41", 40009, udpPoller);
+            // multicastSubscribe(Config.networkInterface, "224.0.89.42", 40010, udpPoller);
+            // multicastSubscribe(Config.networkInterface, "224.0.89.43", 40011, udpPoller);
 
             // Tape A - quotes
             multicastSubscribe(Config.networkInterface, "224.0.90.0", 40000, udpPoller);

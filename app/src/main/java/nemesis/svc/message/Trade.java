@@ -28,6 +28,11 @@ public class Trade implements Message
     {
     }
 
+    public Trade(ByteBuffer buf)
+    {
+        this.buf = buf;
+    }
+
     public void setFakeValues(ByteBuffer buf)
     {
         fromByteBuffer(buf);

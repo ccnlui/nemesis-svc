@@ -9,41 +9,51 @@ import net.openhft.chronicle.wire.SelfDescribingMarshallable;
 // CQS_Pillar_Output_Specification 3.0
 //-----------------------------------------------------------------------------
 // class BlockHeader
-// {
-//     byte  version;                 // 1 byte  (offset 0)
-//     short blockSize;               // 2 bytes (offset 1)
-//     byte  dataFeedIndicator;       // 1 byte  (offset 3)
-//     byte  retransmissionIndicator; // 1 byte  (offset 4)
-//     int   blockSequenceNumber;     // 4 bytes (offset 5)
-//     byte  messagesInBlock;         // 1 byte  (offset 9)
-//     long  sipBlockTimestamp;       // 8 bytes (offset 10)
-//     short blockCheckSum;           // 2 bytes (offset 18)
-// }                                  // total = 20 bytes
+//     byte  version;                    1 byte  (offset 0)
+//     short blockSize;                  2 bytes (offset 1)
+//     byte  dataFeedIndicator;          1 byte  (offset 3)
+//     byte  retransmissionIndicator;    1 byte  (offset 4)
+//     int   blockSequenceNumber;        4 bytes (offset 5)
+//     byte  messagesInBlock;            1 byte  (offset 9)
+//     long  sipBlockTimestamp;          8 bytes (offset 10)
+//     short blockCheckSum;              2 bytes (offset 18)
+//                                       total = 20 bytes
 
 // class MessageHeader
-// {
-//     short messageLength;              // 2 bytes (offset 0)
-//     byte  messageCategory;            // 1 byte  (offset 2)
-//     byte  messageType;                // 1 byte  (offset 3)
-//     byte  participantID;              // 1 byte  (offset 4)
-//     long  timestamp1;                 // 8 bytes (offset 5)
-//     byte  messageID;                  // 1 byte  (offset 13)
-//     int   transactionID;              // 4 bytes (offset 14)
-//     long  participantReferenceNumber; // 8 bytes (offset 18)
-// }                                     // total = 26 bytes
+//     short messageLength;              2 bytes (offset 0)
+//     byte  messageCategory;            1 byte  (offset 2)
+//     byte  messageType;                1 byte  (offset 3)
+//     byte  participantID;              1 byte  (offset 4)
+//     long  timestamp1;                 8 bytes (offset 5)
+//     byte  messageID;                  1 byte  (offset 13)
+//     int   transactionID;              4 bytes (offset 14)
+//     long  participantReferenceNumber; 8 bytes (offset 18)
+//                                       total = 26 bytes
 
 public class TransmissionBlock extends SelfDescribingMarshallable
 {
     public static int MAX_SIZE = 1024;
-    ByteBuffer buf;
-    int msgPos;
-    int msgStart;
+    public static int MSG_HEADER_SIZE = 26;
+
+    private ByteBuffer buf;
+    private int msgIndex;
+    private int msgOffset;
 
     public void fromByteBuffer(ByteBuffer buf)
     {
         this.buf = buf;
-        this.msgPos = 0;
-        this.msgStart = 20;
+        this.msgIndex = 0;
+        this.msgOffset = 20;
+    }
+
+    public ByteBuffer buffer()
+    {
+        return this.buf;
+    }
+
+    public int messageOffset()
+    {
+        return this.msgOffset;
     }
 
     public short blockSize()
@@ -76,7 +86,59 @@ public class TransmissionBlock extends SelfDescribingMarshallable
         buf.putInt(14, now.getNano());
     }
 
-    public void displayHeader()
+    public short currMessageLength()
+    {
+        return buf.getShort(msgOffset);
+    }
+
+    public byte currMessageCategory()
+    {
+        return buf.get(msgOffset+2);
+    }
+
+    public byte currMessageType()
+    {
+        return buf.get(msgOffset+3);
+    }
+
+    public byte currParticipantID()
+    {
+        return buf.get(msgOffset+4);
+    }
+
+    // currTimestamp1 is nanosecond since epoch.
+    public long currTimestamp1()
+    {
+        long sec = buf.getInt(msgOffset+5);
+        long nsec = buf.getInt(msgOffset+9);
+        return sec * 1_000_000_000L + nsec;
+    }
+
+    public byte currMessageID()
+    {
+        return buf.get(msgOffset+13);
+    }
+
+    public int currTransactionID()
+    {
+        return buf.getInt(msgOffset+14);
+    }
+
+    public long currParticipantReferenceNumber()
+    {
+        return buf.getLong(msgOffset+18);
+    }
+
+    public void nextMessage()
+    {
+        if (msgIndex+1 >= messagesInBlock())
+            return;
+
+        msgOffset += currMessageLength();
+        msgIndex += 1;
+    }
+
+    public void displayBlockHeader()
     {
         System.out.printf("(%s) size: %d seq num: %d msgInBlk: %d timestamp: %d time: %s\n",
             buf.order().toString(),
@@ -91,59 +153,7 @@ public class TransmissionBlock extends SelfDescribingMarshallable
         );
     }
 
-    public short currMessageLength()
-    {
-        return buf.getShort(msgStart);
-    }
-
-    public byte currMessageCategory()
-    {
-        return buf.get(msgStart+2);
-    }
-
-    public byte currMessageType()
-    {
-        return buf.get(msgStart+3);
-    }
-
-    public byte currParticipantID()
-    {
-        return buf.get(msgStart+4);
-    }
-
-    // currTimestamp1 is nanosecond since epoch.
-    public long currTimestamp1()
-    {
-        long sec = buf.getInt(msgStart+5);
-        long nsec = buf.getInt(msgStart+9);
-        return sec * 1_000_000_000L + nsec;
-    }
-
-    public byte currMessageID()
-    {
-        return buf.get(msgStart+13);
-    }
-
-    public int currTransactionID()
-    {
-        return buf.getInt(msgStart+14);
-    }
-
-    public long currParticipantReferenceNumber()
-    {
-        return buf.getLong(msgStart+18);
-    }
-
-    public void nextMessage()
-    {
-        if (msgPos+1 >= messagesInBlock())
-            return;
-
-        msgStart += currMessageLength();
-        msgPos += 1;
-    }
-
-    public void parseMessageHeader()
+    public void displayMessageHeader()
     {
         System.out.printf("(%s) len: %d ctg: %c type: %c timestamp1: %s time: %s\n",
             buf.order().toString(),

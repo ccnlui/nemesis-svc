@@ -32,6 +32,11 @@ public class Quote implements Message
     {
     }
 
+    public Quote(ByteBuffer buf)
+    {
+        this.buf = buf;
+    }
+
     // setFakeValues initialize fake values for testing purposes.
     // it generates garbage
     public void setFakeValues(ByteBuffer buf)
@@ -73,11 +78,6 @@ public class Quote implements Message
         return buf.get(0);
     }
 
-    public void setType()
-    {
-        buf.put(0, (byte) Message.QUOTE);
-    }
-
     public int symbol(StringBuffer sb)
     {
         int i;
@@ -92,29 +92,14 @@ public class Quote implements Message
         return i;
     }
 
-    public void setSymbol(String symbol, Charset charset)
-    {
-        buf.put(1, symbol.getBytes(charset));
-    }
-
     public byte askExchange()
     {
         return buf.get(12);
     }
 
-    public void setAskExchange(byte ae)
-    {
-        buf.put(12, ae);
-    }
-
     public byte bidExchange()
     {
         return buf.get(13);
-    }
-
-    public void setBidExchange(byte be)
-    {
-        buf.put(13, be);
     }
 
     public int conditions(ByteBuffer bb)
@@ -127,19 +112,9 @@ public class Quote implements Message
         return i;
     }
 
-    public void setConditions(byte[] conditions)
-    {
-        buf.put(14, conditions);
-    }
-
     public long timestamp()
     {
         return buf.getLong(16);
-    }
-
-    public void setTimestamp(long timestamp)
-    {
-        buf.putLong(16, timestamp);
     }
 
     public double askPrice()
@@ -147,19 +122,9 @@ public class Quote implements Message
         return buf.getDouble(24);
     }
 
-    public void setAskPrice(double ap)
-    {
-        buf.putDouble(24, ap);
-    }
-
     public double bidPrice()
     {
         return buf.getDouble(32);
-    }
-
-    public void setBidPrice(double bp)
-    {
-        buf.putDouble(32, bp);
     }
 
     public int askSize()
@@ -167,19 +132,9 @@ public class Quote implements Message
         return buf.getInt(40);
     }
 
-    public void setAskSize(int as)
-    {
-        buf.putInt(40, as);
-    }
-
     public int bidSize()
     {
         return buf.getInt(44);
-    }
-
-    public void setBidSize(int bs)
-    {
-        buf.putInt(44, bs);
     }
 
     public byte nbbo()
@@ -187,24 +142,94 @@ public class Quote implements Message
         return buf.get(48);
     }
 
-    public void setNbbo(byte nbbo)
-    {
-        buf.put(48, nbbo);
-    }
-
     public byte tape()
     {
         return buf.get(49);
-    }
-
-    public void setTape(byte tape)
-    {
-        buf.put(49, tape);
     }
     
     public long receivedAt()
     {
         return buf.getLong(50);
+    }
+
+    public void setType()
+    {
+        buf.put(0, (byte) Message.QUOTE);
+    }
+
+    public void setSymbol(String symbol, Charset charset)
+    {
+        buf.put(1, symbol.getBytes(charset));
+    }
+
+    public void setSymbol(ByteBuffer in, int offset, int length)
+    {
+        buf.put(1, in, offset, length);
+        // Padding
+        for (int i = length; i < 11; i++)
+        {
+            buf.put(1+i, (byte) 0);
+        }
+    }
+
+    public void setAskExchange(byte ae)
+    {
+        buf.put(12, ae);
+    }
+
+    public void setBidExchange(byte be)
+    {
+        buf.put(13, be);
+    }
+
+    public void setConditions(byte[] conditions)
+    {
+        buf.put(14, conditions);
+    }
+
+    public void setConditions(ByteBuffer in, int offset, int length)
+    {
+        buf.put(14, in, offset, length);
+        // Padding
+        for (int i = length; i < 2; i++)
+        {
+            buf.put(14+i, (byte) 0);
+        }
+    }
+
+    public void setTimestamp(long timestamp)
+    {
+        buf.putLong(16, timestamp);
+    }
+
+    public void setAskPrice(double ap)
+    {
+        buf.putDouble(24, ap);
+    }
+
+    public void setBidPrice(double bp)
+    {
+        buf.putDouble(32, bp);
+    }
+
+    public void setAskSize(int as)
+    {
+        buf.putInt(40, as);
+    }
+
+    public void setBidSize(int bs)
+    {
+        buf.putInt(44, bs);
+    }
+
+    public void setNbbo(byte nbbo)
+    {
+        buf.put(48, nbbo);
+    }
+
+    public void setTape(byte tape)
+    {
+        buf.put(49, tape);
     }
 
     public void setReceivedAt(long timestamp)

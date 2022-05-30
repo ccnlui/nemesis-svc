@@ -13,6 +13,7 @@ import org.agrona.BufferUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import nemesis.svc.message.cqs.Parser;
 import nemesis.svc.message.cqs.TransmissionBlock;
 import nemesis.svc.multicast.PacketHandler;
 import nemesis.svc.multicast.UdpTransportPoller;
@@ -54,7 +55,7 @@ public class ZeroGCListener
     public void onBlock(ByteBuffer buffer)
     {
         block.fromByteBuffer(buffer);
-        block.displayHeader();
+        block.displayBlockHeader();
         // parser.onTransmissionBlock(block);
     }
 
