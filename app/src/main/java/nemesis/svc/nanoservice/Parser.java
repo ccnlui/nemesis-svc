@@ -126,7 +126,8 @@ public class Parser
             }
             block.nextMessage();
         }
-        checkSequenceNumber(sequenceNumber, messagesInBlock);
+        // TODO: sequence number per multicast group
+        // checkSequenceNumber(sequenceNumber, messagesInBlock);
     }
 
     private void handleControlMessage(TransmissionBlock block)
@@ -273,6 +274,6 @@ public class Parser
         LOG.info("         quote messages = {}", quoteMessages);
         LOG.info("         trade messages = {}", tradeMessages);
         LOG.info("       unknown messages = {}", unknownMessages);
-        LOG.info("          sent messages = {}", unknownMessages);
+        LOG.info("          sent messages = {}", sentMessages);
     }
 }
