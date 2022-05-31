@@ -8,7 +8,7 @@ import nemesis.svc.message.Quote;
 // CQS_Pillar_Output_Specification 6.4.2
 //-----------------------------------------------------------------------------
 // class LongQuote
-//     byte[] securitySymbol;                    1 bytes (offset 0)
+//     byte[] securitySymbol;                   11 bytes (offset 0)
 //     byte   instrumentType;                    1 byte  (offset 11)
 //     byte   quoteCondition;                    1 byte  (offset 12)
 //     byte   securityStatusIndicator;           1 byte  (offset 13)
@@ -44,6 +44,7 @@ public class LongQuote
         out.setAskExchange(block.currParticipantID());
         out.setBidExchange(block.currParticipantID());
         out.setConditions(buf, dataOffset+12, 1);
+        out.setTimestamp(block.currTimestamp1());
         long op = buf.getLong(dataOffset+26);
         out.setAskPrice(op / 1e6);
         long bp = buf.getLong(dataOffset+14);

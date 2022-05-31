@@ -1,4 +1,4 @@
-package nemesis.svc.message;
+package nemesis.svc.message.cqs;
 
 //-----------------------------------------------------------------------------
 // CQS_Pillar_Output_Specification 6.4.3

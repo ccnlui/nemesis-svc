@@ -69,11 +69,6 @@ public class Trade implements Message
         return buf.get(0);
     }
 
-    public void setType()
-    {
-        buf.put(0, (byte) Message.TRADE);
-    }
-
     public int symbol(StringBuffer sb)
     {
         int i;
@@ -88,19 +83,9 @@ public class Trade implements Message
         return i;
     }
 
-    public void setSymbol(String symbol, Charset charset)
-    {
-        buf.put(1, symbol.getBytes(charset));
-    }
-
     public int volume()
     {
         return buf.getInt(12);
-    }
-
-    public void setVolume(int volume)
-    {
-        buf.putInt(12, volume);
     }
 
     public long ID()
@@ -108,29 +93,14 @@ public class Trade implements Message
         return buf.getLong(16);
     }
 
-    public void setID(long id)
-    {
-        buf.putLong(16, id);
-    }
-
     public long timestamp()
     {
         return buf.getLong(24);
     }
 
-    public void setTimestamp(long timestamp)
-    {
-        buf.putLong(24, timestamp);
-    }
-
     public double price()
     {
         return buf.getDouble(32);
-    }
-
-    public void setPrice(double price)
-    {
-        buf.putDouble(32, price);
     }
 
     public int conditions(ByteBuffer bb)
@@ -143,24 +113,79 @@ public class Trade implements Message
         return i;
     }
 
-    public void setConditions(byte[] conditions)
-    {
-        buf.put(40, conditions);
-    }
-
     public byte exchange()
     {
         return buf.get(44);
     }
 
-    public void setExchange(byte exchange)
-    {
-        buf.put(44, exchange);
-    }
-
     public byte tape()
     {
         return buf.get(45);
+    }
+
+    public long receivedAt()
+    {
+        return buf.getLong(46);
+    }
+
+    public void setType()
+    {
+        buf.put(0, (byte) Message.TRADE);
+    }
+
+    public void setSymbol(String symbol, Charset charset)
+    {
+        buf.put(1, symbol.getBytes(charset));
+    }
+
+    public void setSymbol(ByteBuffer in, int offset, int length)
+    {
+        buf.put(1, in, offset, length);
+        // Padding
+        for (int i = length; i < 11; i++)
+        {
+            buf.put(1+i, (byte) 0);
+        }
+    }
+
+    public void setVolume(int volume)
+    {
+        buf.putInt(12, volume);
+    }
+
+    public void setID(long id)
+    {
+        buf.putLong(16, id);
+    }
+
+    public void setTimestamp(long timestamp)
+    {
+        buf.putLong(24, timestamp);
+    }
+
+    public void setPrice(double price)
+    {
+        buf.putDouble(32, price);
+    }
+
+    public void setConditions(byte[] conditions)
+    {
+        buf.put(40, conditions);
+    }
+
+    public void setConditions(ByteBuffer in, int offset, int length)
+    {
+        buf.put(40, in, offset, length);
+        // Padding
+        for (int i = length; i < 4; i++)
+        {
+            buf.put(40+i, (byte) 0);
+        }
+    }
+
+    public void setExchange(byte exchange)
+    {
+        buf.put(44, exchange);
     }
 
     public void setTape(byte tape)
@@ -171,11 +196,6 @@ public class Trade implements Message
     public void setReceivedAt(long timestamp)
     {
         buf.putLong(46, timestamp);
-    }
-
-    public long receivedAt()
-    {
-        return buf.getLong(46);
     }
 
     @Override

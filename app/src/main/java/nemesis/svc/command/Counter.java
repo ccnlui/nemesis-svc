@@ -16,8 +16,8 @@ import java.util.concurrent.Callable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import nemesis.svc.message.cqs.Parser;
 import nemesis.svc.message.cqs.TransmissionBlock;
+import nemesis.svc.nanoservice.Parser;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
