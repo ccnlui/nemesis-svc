@@ -35,17 +35,22 @@ public class ReceiveAgent implements Agent
     private final FragmentHandler assembler;
     private final ShutdownSignalBarrier barrier;
 
-    private final NanoClock clock = new SystemNanoClock();
-    private final EpochNanoClock epochClock = new OffsetEpochNanoClock();
-    private long nowNs = clock.nanoTime();
-    private final long startTimeNs = nowNs + 10_000_000_000L;
-    private final long endTimeNs = nowNs + 30_000_000_000L;
+    private final NanoClock clock;
+    private final EpochNanoClock epochClock;
+    private long nowNs;
+    private final long startTimeNs;
+    private final long endTimeNs;
+    private final long resetIntervalNs;
+    private final long reportIntervalNs;
+    private long nextResetTimeNs;
+    private long nextReportTimeNs;
     
 
     public ReceiveAgent(
         final Subscription sub,
         final Histogram histogram,
-        final ShutdownSignalBarrier barrier)
+        final ShutdownSignalBarrier barrier,
+        final long testDurationNs)
     {
         this.sub = sub;
         this.unsafeBuffer = new UnsafeBuffer(ByteBuffer.allocateDirect(Message.MAX_SIZE));
@@ -54,6 +59,16 @@ public class ReceiveAgent implements Agent
         this.histogram = histogram;
         this.assembler = new FragmentAssembler(this::onMessage);
         this.barrier = barrier;
+
+        this.clock = new SystemNanoClock();
+        this.epochClock = new OffsetEpochNanoClock();
+        this.nowNs = clock.nanoTime();
+        this.startTimeNs = nowNs + Config.warmUpDurationNs;
+        this.endTimeNs = testDurationNs > 0 ? startTimeNs + testDurationNs : -1;
+        this.resetIntervalNs = 60_000_000_000L;
+        this.nextResetTimeNs = testDurationNs == 0 ? startTimeNs + resetIntervalNs: -1;
+        this.reportIntervalNs = 5_000_000_000L;
+        this.nextReportTimeNs = startTimeNs + reportIntervalNs;
     }
 
     private void onMessage(DirectBuffer buffer, int offset, int length, Header header)
@@ -65,18 +80,36 @@ public class ReceiveAgent implements Agent
         {
         case Message.QUOTE:
             this.quote.fromByteBuffer(unsafeBuffer.byteBuffer());
-            if (this.onScheduleMeasure())
+            nowNs = clock.nanoTime();
+            if (this.onScheduleMeasure(nowNs))
             {
                 histogram.recordValue(max(1, epochClock.nanoTime() - quote.receivedAt()));
+            }
+            if (this.onScheduleReset(nowNs))
+            {
+                histogram.reset();
+            }
+            if (this.onScheduleReport(nowNs))
+            {
+                reportPercentiles();
             }
             // LOG.info("quote: {}", quote.receivedAt());
             break;
 
         case Message.TRADE:
             this.trade.fromByteBuffer(unsafeBuffer.byteBuffer());
-            if (this.onScheduleMeasure())
+            nowNs = clock.nanoTime();
+            if (this.onScheduleMeasure(nowNs))
             {
                 histogram.recordValue(max(1, epochClock.nanoTime() - trade.receivedAt()));
+            }
+            if (this.onScheduleReset(nowNs))
+            {
+                histogram.reset();
+            }
+            if (this.onScheduleReport(nowNs))
+            {
+                reportPercentiles();
             }
             // LOG.info("trade: {}", trade.receivedAt());
             break;
@@ -90,11 +123,21 @@ public class ReceiveAgent implements Agent
     public int doWork() throws Exception
     {
         int fragmentReceived = this.sub.poll(this.assembler, 10);
-        if (endTimeNs <= nowNs)
+        if (endTimeNs != -1 && endTimeNs <= nowNs)
         {
             barrier.signal();
         }
         return fragmentReceived;
+    }
+
+    private void reportPercentiles()
+    {
+        LOG.info("latencies (us) - p50: {} p90: {} p95: {} p99: {}",
+            histogram.getValueAtPercentile(50) / 1000,
+            histogram.getValueAtPercentile(90) / 1000,
+            histogram.getValueAtPercentile(95) / 1000,
+            histogram.getValueAtPercentile(99) / 1000
+        );
     }
 
     @Override
@@ -103,11 +146,31 @@ public class ReceiveAgent implements Agent
         return "receiver";
     }
 
-    private boolean onScheduleMeasure()
+    private boolean onScheduleMeasure(long nowNs)
     {
-        nowNs = clock.nanoTime();
+        
         if (startTimeNs <= nowNs)
         {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean onScheduleReset(long nowNs)
+    {
+        if (nextResetTimeNs != -1 && nextResetTimeNs <= nowNs)
+        {
+            nextResetTimeNs += resetIntervalNs;
+            return true;
+        }
+        return false;
+    }
+
+    private boolean onScheduleReport(long nowNs)
+    {
+        if (nextReportTimeNs <= nowNs)
+        {
+            nextReportTimeNs += reportIntervalNs;
             return true;
         }
         return false;

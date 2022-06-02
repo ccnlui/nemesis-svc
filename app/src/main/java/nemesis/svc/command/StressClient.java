@@ -25,6 +25,9 @@ public class StressClient implements Callable<Void>
     @Option(names = "--sub-endpoint", description = "aeron udp transport endpoint from which messages are subscribed <address:port>")
     String subEndpoint;
 
+    @Option(names = "--duration", description = "duration of stress test in ns (default: 0)")
+    long testDurationNs;
+
     @Override
     public Void call() throws Exception
     {
@@ -46,6 +49,10 @@ public class StressClient implements Callable<Void>
         if (this.subEndpoint != null && !this.subEndpoint.isEmpty())
         {
             Config.subEndpoint = this.subEndpoint;
+        }
+        if (this.testDurationNs != 0)
+        {
+            Config.testDurationNs = this.testDurationNs;
         }
     }
 }

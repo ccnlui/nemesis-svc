@@ -43,6 +43,10 @@ public final class Config
     public static long quoteIntervalUs = 100;
     public static long tradeIntervalUs = 200;
 
+    // Stress client
+    public static long testDurationNs = 0;
+    public static long warmUpDurationNs = 30_000_000_000L;
+
     // UDP Multicast
     public static String networkInterface = "eth0";
     public static String addr = "224.0.90.0";

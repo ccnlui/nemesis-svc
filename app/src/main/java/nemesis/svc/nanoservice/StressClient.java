@@ -25,6 +25,7 @@ public class StressClient
     private final Aeron aeron;
     private final Subscription sub;
     private final Histogram histogram;
+    private final long testDurationNs;
 
     public StressClient()
     {
@@ -37,13 +38,18 @@ public class StressClient
         LOG.info("in: {}:{}", inChannel, inStream);
 
         this.histogram = new Histogram(TimeUnit.MINUTES.toNanos(1), 3);
+        this.testDurationNs = Config.testDurationNs;
+        LOG.info("Benchmark duration: {}sec after warmup {}sec...",
+            this.testDurationNs / TimeUnit.SECONDS.toNanos(1),
+            Config.warmUpDurationNs / TimeUnit.SECONDS.toNanos(1)
+        );
     }
 
     public void run() throws Exception
     {
         final ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
 
-        final ReceiveAgent receiveAgent = new ReceiveAgent(sub, histogram, barrier);
+        final ReceiveAgent receiveAgent = new ReceiveAgent(sub, histogram, barrier, testDurationNs);
         final AgentRunner agentRunner = new AgentRunner(
             Config.idleStrategy,
             Throwable::printStackTrace,
