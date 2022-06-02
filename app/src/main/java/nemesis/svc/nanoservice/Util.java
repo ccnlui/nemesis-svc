@@ -1,5 +1,7 @@
 package nemesis.svc.nanoservice;
 
+import static org.agrona.SystemUtil.loadPropertiesFiles;
+
 import org.agrona.concurrent.BusySpinIdleStrategy;
 import org.agrona.concurrent.NoOpIdleStrategy;
 import org.slf4j.Logger;
@@ -23,6 +25,7 @@ final class Util
     {
         if (Config.embeddedMediaDriver)
         {
+            loadPropertiesFiles(Config.mediaDriverConfigPath);
             MediaDriver.Context mediaDriverCtx = new MediaDriver.Context()
                 .dirDeleteOnStart(true)
                 .threadingMode(ThreadingMode.DEDICATED)

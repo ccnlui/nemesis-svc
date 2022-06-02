@@ -20,6 +20,7 @@ public final class Config
     // Media driver
     public static boolean embeddedMediaDriver = false;
     public static String aeronDir = "";
+    public static String mediaDriverConfigPath = System.getProperty("user.dir") + "/build/resources/main/low-latency-driver.properties";
 
     // Aeron
     public static String pubEndpoint = "";
