@@ -3,6 +3,7 @@ package nemesis.svc.nanoservice;
 import static java.lang.Math.max;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.TimeUnit;
 
 import org.HdrHistogram.Histogram;
 import org.agrona.DirectBuffer;
@@ -34,6 +35,7 @@ public class ReceiveAgent implements Agent
     private final Histogram histogram;
     private final FragmentHandler assembler;
     private final ShutdownSignalBarrier barrier;
+    private final io.prometheus.client.Histogram msgDelay;
 
     private final NanoClock clock;
     private final EpochNanoClock epochClock;
@@ -50,7 +52,8 @@ public class ReceiveAgent implements Agent
         final Subscription sub,
         final Histogram histogram,
         final ShutdownSignalBarrier barrier,
-        final long testDurationNs)
+        final long testDurationNs,
+        final io.prometheus.client.Histogram msgDelay)
     {
         this.sub = sub;
         this.unsafeBuffer = new UnsafeBuffer(ByteBuffer.allocateDirect(Message.MAX_SIZE));
@@ -59,6 +62,7 @@ public class ReceiveAgent implements Agent
         this.histogram = histogram;
         this.assembler = new FragmentAssembler(this::onMessage);
         this.barrier = barrier;
+        this.msgDelay = msgDelay;
 
         this.clock = new SystemNanoClock();
         this.epochClock = new OffsetEpochNanoClock();
@@ -84,6 +88,10 @@ public class ReceiveAgent implements Agent
             if (this.onScheduleMeasure(nowNs))
             {
                 histogram.recordValue(max(1, epochClock.nanoTime() - quote.receivedAt()));
+                if (msgDelay != null)
+                {
+                    msgDelay.observe(max(1, epochClock.nanoTime() - quote.receivedAt()) / Constant.NANOS_PER_SECOND);
+                }
             }
             if (this.onScheduleReset(nowNs))
             {
@@ -102,6 +110,10 @@ public class ReceiveAgent implements Agent
             if (this.onScheduleMeasure(nowNs))
             {
                 histogram.recordValue(max(1, epochClock.nanoTime() - trade.receivedAt()));
+                if (msgDelay != null)
+                {
+                    msgDelay.observe(max(1, epochClock.nanoTime() - trade.receivedAt()) / Constant.NANOS_PER_SECOND);
+                }
             }
             if (this.onScheduleReset(nowNs))
             {

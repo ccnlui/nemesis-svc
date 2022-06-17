@@ -53,4 +53,8 @@ public final class Config
     public static String addr = "224.0.90.0";
     public static int port = 40000;
     public static int maxUdpMessageSize = 65504;
+
+    // Prometheus
+    public static boolean enableMetrics = false;
+    public static int metricsPort = 8000;
 }

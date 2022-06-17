@@ -63,6 +63,10 @@ dependencies {
 
     // Babl websocket
     implementation 'com.aitusoftware:babl:0.11.0'
+
+    // Prometheus
+    implementation 'io.prometheus:simpleclient:0.16.0'
+    implementation 'io.prometheus:simpleclient_httpserver:0.16.0'
 }
 
 application {

@@ -28,6 +28,9 @@ public class StressClient implements Callable<Void>
     @Option(names = "--duration", description = "duration of stress test in ns (default: 0)")
     long testDurationNs;
 
+    @Option(names = "--metrics", description = "enable prometheus metrics server")
+    boolean enableMetrics;
+
     @Override
     public Void call() throws Exception
     {
@@ -53,6 +56,10 @@ public class StressClient implements Callable<Void>
         if (this.testDurationNs != 0)
         {
             Config.testDurationNs = this.testDurationNs;
+        }
+        if (this.enableMetrics)
+        {
+            Config.enableMetrics = this.enableMetrics;
         }
     }
 }

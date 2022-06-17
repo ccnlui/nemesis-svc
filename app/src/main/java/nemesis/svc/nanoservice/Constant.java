@@ -8,6 +8,7 @@ public final class Constant
 
     public static final long INT_TO_LONG_MASK = 0x00_00_00_00_FF_FF_FF_FF;
     public static final int BYTE_TO_INT_MASK = 0x00_00_00_FF;
+    public static final long NANOS_PER_SECOND = 1_000_000_000L;
 
     // Quote appendage
     public static final byte noNBBOChange                    = (byte) 'A';  // No Best Bid change, No Best Offer change
