@@ -90,7 +90,7 @@ public class ReceiveAgent implements Agent
                 histogram.recordValue(max(1, epochClock.nanoTime() - quote.receivedAt()));
                 if (msgDelay != null)
                 {
-                    msgDelay.observe(max(1, epochClock.nanoTime() - quote.receivedAt()) / Constant.NANOS_PER_SECOND);
+                    msgDelay.observe((double) max(1, epochClock.nanoTime() - quote.receivedAt()) / Constant.NANOS_PER_SECOND);
                 }
             }
             if (this.onScheduleReset(nowNs))
@@ -112,7 +112,7 @@ public class ReceiveAgent implements Agent
                 histogram.recordValue(max(1, epochClock.nanoTime() - trade.receivedAt()));
                 if (msgDelay != null)
                 {
-                    msgDelay.observe(max(1, epochClock.nanoTime() - trade.receivedAt()) / Constant.NANOS_PER_SECOND);
+                    msgDelay.observe((double) max(1, epochClock.nanoTime() - trade.receivedAt()) / Constant.NANOS_PER_SECOND);
                 }
             }
             if (this.onScheduleReset(nowNs))
